@@ -1,0 +1,113 @@
+PROJECT: Sri Sai Hospital website, Tanuku, Andhra Pradesh, India
+Build a complete, responsive, single-page website with exceptional visual polish, smooth motion, and a calm, expensive, trustworthy feel. It should look like a premium private hospital in a major city, not a template. The client must be able to see it and approve it immediately, so the first screen must be strong and every section must look finished.
+
+ASSETS (attached, use exactly as provided)
+- Hospital logo: the circular emblem with teal wings and the "SRITHA VARDHAN" lettering. Use the full logo on light backgrounds. Do not redraw it, recolour it, or turn it into a white silhouette. On dark backgrounds, place it on a white rounded tile.
+- Doctor portraits: Dr. Sritha and Dr. Jayavardhan Reddy Bijjam. Use them as large, unedited portraits. Do not crop them into thin strips or replace them.
+- Hospital photographs: do NOT generate AI images of the hospital, its rooms, staff, or patients. Create a clean, elegant image placeholder for each hospital photo slot (building, reception, consultation room, waiting area, laboratory). Each placeholder shows a soft gradient in the brand colours with a simple line icon and the words "Hospital photograph" and is easy to swap later. Name each slot clearly in the code (for example assets/photos/building.jpg).
+
+BRAND SYSTEM
+- Deep forest #0B4F42 for headings and dark sections
+- Primary teal #00806A for buttons and key highlights
+- Mint paper #F4F8F6 for the page background; pure white #FFFFFF for alternating sections
+- Text #14201D; muted text #4E5F5A
+- Accent lime #C6E10A, used only for live status indicators and tiny highlights
+- Keep the whole site within these colours so it feels like one brand.
+
+TYPOGRAPHY
+- Display: Hanken Grotesk or Plus Jakarta Sans, bold, tight tracking for headlines (clamp-based sizes, up to about 96px on desktop)
+- Body: Inter, 17px desktop, 16px mobile, line height 1.6
+- Telugu: Noto Sans Telugu, line height 1.8
+- Use a single italic or colour accent on one word per major headline. No gradient text.
+
+HERO (the most important screen)
+- Full-width, with a left column for text and a right column for a large framed hospital image slot with a soft shadow and a small rotating badge that shows the emblem.
+- Eyebrow pill: "Sri Sai Hospital · Tanuku"
+- Headline: "Sri Sai Hospital", with the Telugu name బిజ్జం వారి శ్రీ సాయి హాస్పిటల్ directly beneath it
+- One line: "Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services in Tanuku."
+- Two buttons: "Call now" (teal, primary) and "Get directions" (outline), which opens the map
+- A live clinic status card showing "Open now" or "Closed now", calculated in India Standard Time from the hours below. Use solid text and a solid background. If you use a glass effect, keep it very light and limited to this card only.
+- Hours shown in this card: Morning Monday to Saturday 9:30 AM – 2:00 PM; Evening Monday to Saturday 5:30 PM – 8:30 PM; 1st and 3rd Sunday 9:30 AM – 2:00 PM
+
+INTERACTIVE BACKGROUND (must have)
+- A field of small BLACK dots (#111 to #222 at 10–35% opacity, 1.5–3px) on the light hero background. They drift slowly on their own.
+- When the cursor moves near them, dots gently scatter away from it and ease back to their home positions over about 1.5 seconds. Use three depth layers that move at different speeds.
+- Implement as one HTML canvas, with about 60 dots on desktop and 30 on mobile. Pause when the hero is off-screen or the tab is hidden.
+- On touch devices, dots respond to finger drag.
+- If reduced motion is enabled, show a static dot pattern.
+- Keep dots out of the text, buttons, and status card. Clear them from behind the headline.
+
+MOTION AND POLISH (all of these)
+- Smooth scroll with eased section transitions
+- Sections fade and rise into view as they enter the screen, under 600ms, staggered for lists
+- Headline reveal: each word slides up from a mask, once, on load
+- Doctor portraits zoom gently on hover and reveal their qualification and registration number
+- Buttons have a subtle magnetic pull toward the cursor on desktop, and a clear keyboard focus state
+- Cards lift with a soft shadow on hover
+- Sticky header that condenses and gains a soft background blur after scrolling
+- Floating action bar on mobile with Call and WhatsApp
+- A thin progress line at the top of the page that shows how far the user has scrolled
+- Use no more than three motion patterns in total, so the site stays calm
+
+WHAT TO SHOW (use only these facts)
+
+Services: six items, shown as a clean grid of cards with a thin line icon and one plain sentence each:
+- Neurology and stroke care: Evaluation and ongoing management of stroke, seizures, and neurological conditions.
+- Diabetes and endocrine management: Structured care for diabetes, thyroid disorders, and related metabolic conditions.
+- General and internal medicine: Comprehensive assessment and treatment of acute and chronic medical illnesses.
+- Psychiatry and mental health: Thoughtful, evidence-based care for mental health and behavioural conditions.
+- Migraine and headache treatment: Diagnosis and management of migraine, cluster headaches, and chronic head pain.
+- Critical care and casualty, 24 hours: Round-the-clock emergency care for acute medical situations and casualties.
+
+Doctors: two large side-by-side profiles, each with the real portrait, name, degree, registration number, and four focus points, with a "Book with Dr. ..." button.
+- Dr. Sritha, MBBS, MD (Neuro-Psychiatry), APMC Reg. No. 85598. Focus: psychiatry and behavioural health; neurological evaluation; migraine and headache disorders; anxiety and stress management.
+- Dr. Jayavardhan Reddy Bijjam, MBBS, MD (Physician), APMC Reg. No. 77460. Focus: general medicine; diabetes management; hypertension care; acute medical fevers.
+
+Videos: three YouTube videos shown as thumbnails that load the player only when clicked. The first video is large and the other two sit below it in a balanced grid.
+- Video IDs: aqTzReeaaTY (large), g-w7LMnzEa4, -HCu-2afK34
+- Thumbnail URL pattern: https://i.ytimg.com/vi/VIDEO_ID/hqdefault.jpg
+- Player URL pattern: https://www.youtube-nocookie.com/embed/VIDEO_ID?autoplay=1
+- Caption each with "Health advice from our doctors" and link to the channel: https://www.youtube.com/channel/UCoZrqTftw_z7tXwagHrw2oA
+
+Gallery: a balanced grid of five photo slots (Building, Reception, Consultation room, Waiting area, Laboratory) using the placeholders described above. The grid must fit the screen width with no horizontal overflow.
+
+Reviews: show exactly these four reviews, with the wording and names unchanged:
+1. "Best hospital in tanuku. Doctors are very friendly and staff also good working staff." Karuna Chintapalli, 10 months ago
+2. "Hospital was very clean and staff also good receiving, doctor Stitha madam was consulting to patient good and good treatment" Mana Manchili tri, a year ago
+3. "A hospital with very good doctors, staff with lab and medical facilities. This hospital cares about Patients not money." Supriya Reddy, 4 years ago
+4. "Good hospital staff, best doctors in the city." Sai, a year ago
+Display them in a two-by-two grid on desktop and a single column on mobile, so no card sits alone in a row. Show "5.0 · 31 Google reviews" and a "More Google reviews" button linking to https://www.google.com/maps/place/Sri+Siri+hospital/@16.7536484,81.6836458,840m/data=!3m1!1e3!4m18!1m9!3m8!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!2sSri+Siri+hospital!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn!3m7!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn?entry=ttu
+
+Visit:
+- Address: DRNO.28-6-15, Sri Matha Tower, Velpur Road, Tanuku, West Godavari, Andhra Pradesh 534211
+- Phone: +91 88192 24466, with a Call button and a WhatsApp button (https://wa.me/918819224466)
+- Map: embed https://www.google.com/maps?q=16.7536433,81.6862207&z=17&output=embed, titled "Sri Sai Hospital, Velpur Road, Tanuku"
+- Full hours table: Morning Mon–Sat 9:30 AM – 2:00 PM; Evening Mon–Sat 5:30 PM – 8:30 PM; 1st and 3rd Sunday 9:30 AM – 2:00 PM
+
+Footer: full logo on a light tile, Telugu and English names, navigation, YouTube link, and a crisis box: "If you are in crisis: Tele-MANAS, 14416 (free, 24 hours). For a medical emergency, call 112 or the casualty number." Add: "Information only. This website does not replace a consultation or emergency care." Use high-contrast text: white or near-white on forest green only.
+
+DO NOT
+- Do not generate or use AI images of people, buildings, rooms, or equipment.
+- Do not add numbers, ratings, patient counts, years of experience, awards, insurance partners, or equipment claims that are not listed above.
+- Do not invent other phone numbers or a casualty line.
+- Do not use the words "best", "top", or "leading" in the site's own copy. (Patient reviews keep their original wording.)
+- Do not copy another hospital's logo, photos, layout, or wording.
+- Do not use emoji. Use thin line icons (for example, Lucide).
+- Do not use glass or blur effects on text-heavy areas. Limit them to the status card and header.
+- Do not place text on any background with contrast below WCAG AA.
+
+RESPONSIVE
+- Desktop (1280px and up): full layout with hero split and grids as described
+- Tablet (768–1279px): two-column grids become single column where needed, dot count reduced
+- Mobile (below 768px): single column, full-width buttons, floating Call and WhatsApp bar, dots respond to touch
+- Test at 390px width with no horizontal scroll. Touch targets at least 44px.
+
+PERFORMANCE AND ACCESSIBILITY
+- Lazy-load images and video. Compress all images. Target a fast load on mobile data.
+- Descriptive alt text for portraits and photo placeholders. Decorative dots and motion are hidden from screen readers.
+- Full keyboard navigation and visible focus states.
+- Respect prefers-reduced-motion everywhere: no parallax, no magnetic buttons, no word reveal, static dots.
+- Single index.html plus an assets folder, deployable to any static host.
+
+OUTPUT
+Deliver index.html, styles and scripts (inline or in files), and an assets folder with the logo, the two doctor portraits, and the photo placeholder files. Add a README listing exactly which file to replace with each real hospital photograph.

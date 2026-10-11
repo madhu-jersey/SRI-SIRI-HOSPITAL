@@ -1,0 +1,620 @@
+import { useEffect, useRef, useState } from 'react';
+import {
+  Activity, ArrowRight, Brain, CalendarDays, Check, Clock3,
+  HeartPulse, MapPin, Menu, MessageCircle, Play, Stethoscope, X,
+} from 'lucide-react';
+
+const phone = '+918819224466';
+const whatsapp = 'https://wa.me/918819224466';
+const directions = 'https://www.google.com/maps?q=16.7536433,81.6862207&z=17';
+const reviewsUrl = 'https://www.google.com/maps/place/Sri+Siri+hospital/@16.7536484,81.6836458,840m/data=!3m1!1e3!4m18!1m9!3m8!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!2sSri+Siri+hospital!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn!3m7!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn?entry=ttu';
+const youtubeChannel = 'https://www.youtube.com/channel/UCoZrqTftw_z7tXwagHrw2oA';
+
+const services = [
+  { title: 'Neurology and stroke care', text: 'Evaluation and ongoing management of stroke, seizures, and neurological conditions.', Icon: Brain },
+  { title: 'Diabetes and endocrine management', text: 'Structured care for diabetes, thyroid disorders, and related metabolic conditions.', Icon: Activity },
+  { title: 'General and internal medicine', text: 'Comprehensive assessment and treatment of acute and chronic medical illnesses.', Icon: Stethoscope },
+  { title: 'Psychiatry and mental health', text: 'Thoughtful, evidence-based care for mental health and behavioural conditions.', Icon: HeartPulse },
+  { title: 'Migraine and headache treatment', text: 'Diagnosis and management of migraine, cluster headaches, and chronic head pain.', Icon: Brain },
+  { title: 'Critical care and casualty, 24 hours', text: 'Round-the-clock emergency care for acute medical situations and casualties.', Icon: Clock3 },
+];
+
+const doctors = [
+  {
+    name: 'Dr. Sritha',
+    degree: 'MBBS, MD (Neuro-Psychiatry)',
+    reg: 'APMC Reg. No. 85598',
+    image: '/assets/doctor-sritha.png',
+    alt: 'Portrait of Dr. Sritha',
+    focus: ['Psychiatry and behavioural health', 'Neurological evaluation', 'Migraine and headache disorders', 'Anxiety and stress management'],
+  },
+  {
+    name: 'Dr. Jayavardhan Reddy Bijjam',
+    degree: 'MBBS, MD (Physician)',
+    reg: 'APMC Reg. No. 77460',
+    image: '/assets/doctor-jayavardhan-reddy.png',
+    alt: 'Portrait of Dr. Jayavardhan Reddy Bijjam',
+    focus: ['General medicine', 'Diabetes management', 'Hypertension care', 'Acute medical fevers'],
+  },
+];
+
+const gallery = [
+  { name: 'Building', file: 'building.svg', alt: 'Hospital photograph placeholder: building' },
+  { name: 'Reception', file: 'reception.svg', alt: 'Hospital photograph placeholder: reception' },
+  { name: 'Consultation room', file: 'consultation-room.svg', alt: 'Hospital photograph placeholder: consultation room' },
+  { name: 'Waiting area', file: 'waiting-area.svg', alt: 'Hospital photograph placeholder: waiting area' },
+  { name: 'Laboratory', file: 'laboratory.svg', alt: 'Hospital photograph placeholder: laboratory' },
+];
+
+const reviews = [
+  { quote: 'Best hospital in tanuku. Doctors are very friendly and staff also good working staff.', name: 'Karuna Chintapalli', age: '10 months ago' },
+  { quote: 'Hospital was very clean and staff also good receiving, doctor Stitha madam was consulting to patient good and good treatment', name: 'Mana Manchili tri', age: 'a year ago' },
+  { quote: 'A hospital with very good doctors, staff with lab and medical facilities. This hospital cares about Patients not money.', name: 'Supriya Reddy', age: '4 years ago' },
+  { quote: 'Good hospital staff, best doctors in the city.', name: 'Sai', age: 'a year ago' },
+];
+
+function getOpenState(date: Date) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(date);
+  const day = parts.find((part) => part.type === 'weekday')?.value;
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value ?? 0);
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value ?? 0);
+  const totalMinutes = hour * 60 + minute;
+  const sundayDate = Number(new Intl.DateTimeFormat('en', { timeZone: 'Asia/Kolkata', day: 'numeric' }).format(date));
+  const sundayAppointment = day === 'Sun' && (Math.floor((sundayDate - 1) / 7) + 1 === 1 || Math.floor((sundayDate - 1) / 7) + 1 === 3);
+  const scheduledDay = (day !== 'Sun' && day !== 'Sat') || day === 'Sat' || sundayAppointment;
+  const openPeriod = (totalMinutes >= 570 && totalMinutes < 840) || (day !== 'Sun' && totalMinutes >= 1050 && totalMinutes < 1230);
+  return scheduledDay && openPeriod;
+}
+
+function useClinicStatus() {
+  const [isOpen, setIsOpen] = useState(() => getOpenState(new Date()));
+  useEffect(() => {
+    const update = () => setIsOpen(getOpenState(new Date()));
+    const timer = window.setInterval(update, 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return isOpen;
+}
+
+function DotField() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const heroRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const hero = canvas?.parentElement;
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !hero || !ctx) return;
+    heroRef.current = hero;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let width = 0;
+    let height = 0;
+    let frame = 0;
+    let visible = true;
+    let pointer = { x: -1000, y: -1000 };
+    let points: { x: number; y: number; homeX: number; homeY: number; vx: number; vy: number; radius: number; alpha: number; depth: number }[] = [];
+    const resize = () => {
+      const rect = hero.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = window.innerWidth < 768 ? 30 : window.innerWidth < 1280 ? 45 : 60;
+      points = Array.from({ length: count }, (_, index) => {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const depth = index % 3;
+        return { x, y, homeX: x, homeY: y, vx: 0, vy: 0, radius: 1 + Math.random() * 1, alpha: .1 + Math.random() * .25, depth };
+      });
+      draw(true);
+    };
+    const draw = (staticOnly = false) => {
+      ctx.clearRect(0, 0, width, height);
+      const copy = hero.querySelector('.hero-copy')?.getBoundingClientRect();
+      const status = hero.querySelector('.status-card')?.getBoundingClientRect();
+      const exclusions = [copy, status].filter((rect): rect is DOMRect => Boolean(rect)).map((rect) => ({
+        left: rect.left - hero.getBoundingClientRect().left - 14,
+        right: rect.right - hero.getBoundingClientRect().left + 14,
+        top: rect.top - hero.getBoundingClientRect().top - 10,
+        bottom: rect.bottom - hero.getBoundingClientRect().top + 10,
+      }));
+      points.forEach((point) => {
+        if (!staticOnly && !reduced.matches) {
+          const dx = point.x - pointer.x;
+          const dy = point.y - pointer.y;
+          const distance = Math.hypot(dx, dy);
+          if (distance < 115 && distance > 0) {
+            const force = (115 - distance) / 115 * (0.7 + point.depth * .45);
+            point.vx += dx / distance * force * .045;
+            point.vy += dy / distance * force * .045;
+          }
+          point.vx += (point.homeX - point.x) * .0019;
+          point.vy += (point.homeY - point.y) * .0019;
+          point.vx *= .91;
+          point.vy *= .91;
+          point.x += point.vx * (0.55 + point.depth * .32);
+          point.y += point.vy * (0.55 + point.depth * .32);
+          point.x += Math.sin(performance.now() / (2300 + point.depth * 800) + point.homeX) * .018;
+        }
+        if (exclusions.some((rect) => point.x > rect.left && point.x < rect.right && point.y > rect.top && point.y < rect.bottom)) return;
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(22, 30, 27, ${point.alpha})`;
+        ctx.arc(point.x, point.y, point.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    };
+    const animate = () => {
+      if (!visible || document.hidden) return;
+      draw();
+      if (!reduced.matches) frame = window.requestAnimationFrame(animate);
+    };
+    const onPointer = (event: PointerEvent) => {
+      const rect = hero.getBoundingClientRect();
+      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    };
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (visible && !document.hidden) {
+        cancelAnimationFrame(frame);
+        draw(reduced.matches);
+        if (!reduced.matches) frame = requestAnimationFrame(animate);
+      } else cancelAnimationFrame(frame);
+    });
+    observer.observe(hero);
+    const onVisibility = () => {
+      if (document.hidden) cancelAnimationFrame(frame);
+      else if (visible) {
+        draw(reduced.matches);
+        if (!reduced.matches) frame = requestAnimationFrame(animate);
+      }
+    };
+    const onMotion = () => {
+      cancelAnimationFrame(frame);
+      draw(reduced.matches);
+      if (!reduced.matches && visible && !document.hidden) frame = requestAnimationFrame(animate);
+    };
+    const onResize = () => resize();
+    resize();
+    if (!reduced.matches) frame = requestAnimationFrame(animate);
+    hero.addEventListener('pointermove', onPointer, { passive: true });
+    window.addEventListener('resize', onResize);
+    document.addEventListener('visibilitychange', onVisibility);
+    reduced.addEventListener('change', onMotion);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      hero.removeEventListener('pointermove', onPointer);
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
+      reduced.removeEventListener('change', onMotion);
+    };
+  }, []);
+  return <canvas ref={canvasRef} className="hero-canvas" aria-hidden="true" />;
+}
+
+function SiteHeader() {
+  const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > 24);
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    return () => window.removeEventListener('scroll', update);
+  }, []);
+  const closeMenu = () => setMenuOpen(false);
+  return (
+    <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
+      <div className="container nav-inner">
+        <a className="brand" href="#home" aria-label="Sri Sai Hospital home" data-testid="link-brand-home" onClick={closeMenu}>
+          <img src="/assets/sri-sai-hospital-logo.png" alt="Sri Sai Hospital emblem" />
+          <span className="brand-name">Sri Sai Hospital<small>Tanuku, Andhra Pradesh</small></span>
+        </a>
+        <nav className={`nav-links${menuOpen ? ' open' : ''}`} aria-label="Main navigation">
+          <a href="#services" data-testid="link-nav-services" onClick={closeMenu}>Services</a>
+          <a href="#doctors" data-testid="link-nav-doctors" onClick={closeMenu}>Our doctors</a>
+          <a href="#gallery" data-testid="link-nav-hospital" onClick={closeMenu}>Hospital</a>
+          <a href="#reviews" data-testid="link-nav-reviews" onClick={closeMenu}>Reviews</a>
+          <a href="#visit" data-testid="link-nav-visit" onClick={closeMenu}>Visit us</a>
+        </nav>
+        <a className="nav-call" href={`tel:${phone}`} data-testid="button-call-header"><PhoneIcon /> Call now</a>
+        <button className="nav-toggle" type="button" data-testid="button-toggle-navigation" aria-label={menuOpen ? 'Close navigation' : 'Open navigation'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>
+          {menuOpen ? <X size={21} /> : <Menu size={21} />}
+        </button>
+      </div>
+    </header>
+  );
+}
+
+function PhoneIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.7a15 15 0 0 0 4.8 4.8L15 13l5 2v4c0 1.1-.9 2-2 2C10.3 21 3 13.7 3 5c0-1.1.9-2 2-2Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+}
+
+function ProgressLine() {
+  const progressRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    let scheduled = false;
+    const update = () => {
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (progressRef.current) progressRef.current.style.width = `${max > 0 ? window.scrollY / max * 100 : 0}%`;
+      scheduled = false;
+    };
+    const onScroll = () => {
+      if (!scheduled) {
+        scheduled = true;
+        requestAnimationFrame(update);
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, []);
+  return <div className="top-progress" aria-hidden="true"><span ref={progressRef} /></div>;
+}
+
+function useReveal() {
+  useEffect(() => {
+    const elements = Array.from(document.querySelectorAll<HTMLElement>('.reveal'));
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      elements.forEach((element) => element.classList.add('is-visible'));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .12 });
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+}
+
+function useMagneticButtons() {
+  useEffect(() => {
+    const finePointer = window.matchMedia('(pointer: fine) and (hover: hover)');
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (!finePointer.matches || reducedMotion.matches) return;
+
+    const buttons = Array.from(document.querySelectorAll<HTMLElement>('.button, .nav-call'));
+    const handleMove = (event: PointerEvent) => {
+      const button = event.currentTarget as HTMLElement;
+      const rect = button.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width - 0.5) * 7;
+      const y = ((event.clientY - rect.top) / rect.height - 0.5) * 4;
+      button.style.setProperty('--magnetic-x', `${x}px`);
+      button.style.setProperty('--magnetic-y', `${y}px`);
+    };
+    const reset = (event: PointerEvent) => {
+      const button = event.currentTarget as HTMLElement;
+      button.style.removeProperty('--magnetic-x');
+      button.style.removeProperty('--magnetic-y');
+    };
+    buttons.forEach((button) => {
+      button.addEventListener('pointermove', handleMove);
+      button.addEventListener('pointerleave', reset);
+    });
+
+    return () => buttons.forEach((button) => {
+      button.removeEventListener('pointermove', handleMove);
+      button.removeEventListener('pointerleave', reset);
+    });
+  }, []);
+}
+
+function Hero() {
+  const isOpen = useClinicStatus();
+  return (
+    <section className="hero" id="home" aria-labelledby="hero-title">
+      <DotField />
+      <div className="container hero-inner">
+        <div className="hero-copy">
+          <span className="hero-pill"><span aria-hidden="true" /> Sri Sai Hospital · Tanuku</span>
+          <h1 id="hero-title"><span className="word"><span>Sri Sai</span></span><br /><span className="word"><span>Hospital</span></span></h1>
+          <p className="telugu-title font-telugu" lang="te" data-testid="text-hospital-name-telugu">బిజ్జం వారి శ్రీ సాయి హాస్పిటల్</p>
+          <p className="hero-description">Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services in Tanuku.</p>
+          <div className="hero-actions">
+            <a className="button button-primary" href={`tel:${phone}`} data-testid="button-call-hero"><PhoneIcon /> Call now</a>
+            <a className="button button-outline" href={directions} target="_blank" rel="noreferrer" data-testid="button-directions"><MapPin size={17} /> Get directions</a>
+          </div>
+        </div>
+        <div className="hero-art">
+          <div className="hero-photo">
+            <img src="/assets/photos/building.svg" alt="Hospital photograph placeholder: building" fetchPriority="high" />
+          </div>
+          <div className="seal" aria-label="Sri Sai Hospital emblem"><img src="/assets/sri-sai-hospital-logo.png" alt="" /></div>
+          <div className="status-card" aria-live="polite">
+            <div className="status-top">
+              <span className="status-label"><span className="live-dot" aria-hidden="true" /> Clinic hours</span>
+              <span className={`status-text${isOpen ? '' : ' closed'}`} data-testid="status-open">{isOpen ? 'Open now' : 'Closed now'}</span>
+            </div>
+            <div className="hours-line"><span>Mon–Sat · Morning</span><strong>9:30 AM – 2:00 PM</strong></div>
+            <div className="hours-line"><span>Mon–Sat · Evening</span><strong>5:30 PM – 8:30 PM</strong></div>
+            <div className="hours-line"><span>1st &amp; 3rd Sunday</span><strong>9:30 AM – 2:00 PM</strong></div>
+          </div>
+        </div>
+      </div>
+      <span className="scroll-note" aria-hidden="true">Care, close to home&nbsp; ↓</span>
+    </section>
+  );
+}
+
+function Services() {
+  return (
+    <section className="section" id="services" aria-labelledby="services-heading">
+      <div className="container">
+        <div className="section-heading reveal">
+          <span className="eyebrow">Care at Sri Sai</span>
+          <h2 id="services-heading">Thoughtful care for <em>every day.</em></h2>
+          <p>Medical care across key needs, with a focus on careful assessment and ongoing support.</p>
+        </div>
+        <div className="service-grid">
+          {services.map(({ title, text, Icon }, index) => (
+            <article className={`service-card reveal reveal-delay-${(index % 3) + 1}`} key={title} data-testid={`card-service-${index + 1}`}>
+              <div className="service-icon"><Icon size={21} strokeWidth={1.65} /></div>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Doctors() {
+  return (
+    <section className="section section-white doctors-section" id="doctors" aria-labelledby="doctors-heading">
+      <div className="container">
+        <div className="section-heading reveal">
+          <span className="eyebrow">Meet your doctors</span>
+          <h2 id="doctors-heading">Expertise with a <em>human touch.</em></h2>
+          <p>Meet the doctors supporting neurological, mental and general medical care at Sri Sai Hospital.</p>
+        </div>
+        <div className="doctor-grid">
+          {doctors.map((doctor, index) => (
+            <article className={`doctor-card reveal reveal-delay-${index + 1}`} key={doctor.name}>
+              <div className="doctor-image"><img src={doctor.image} alt={doctor.alt} loading="lazy" data-testid={`image-doctor-${index + 1}`} /></div>
+              <div className="doctor-info">
+                <h3>{doctor.name}</h3>
+                <p className="doctor-degree">{doctor.degree}</p>
+                <p className="doctor-reg">{doctor.reg}</p>
+                <p className="focus-label">Areas of focus</p>
+                <ul className="focus-list">{doctor.focus.map((item) => <li key={item}><Check size={15} aria-hidden="true" />{item}</li>)}</ul>
+                <a className="button button-primary" href={`tel:${phone}`} aria-label={`Book with ${doctor.name}`} data-testid={`button-book-doctor-${index + 1}`}><CalendarDays size={16} /> Book with {doctor.name}</a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Gallery() {
+  return (
+    <section className="section" id="gallery" aria-labelledby="gallery-heading">
+      <div className="container">
+        <div className="section-heading reveal">
+          <span className="eyebrow">A look around</span>
+          <h2 id="gallery-heading">A place for <em>care.</em></h2>
+          <p>Explore the spaces at Sri Sai Hospital.</p>
+        </div>
+        <div className="gallery-layout">
+          {gallery.map((item, index) => (
+            <figure className={`gallery-item reveal reveal-delay-${(index % 3) + 1}`} key={item.name}>
+              <img src={`/assets/photos/${item.file}`} alt={item.alt} loading="lazy" data-testid={`image-hospital-${index + 1}`} />
+              <figcaption className="gallery-caption">{item.name}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function VideoCard({ videoId, large = false }: { videoId: string; large?: boolean }) {
+  const [activated, setActivated] = useState(false);
+  return (
+    <article className={`video-card${large ? ' video-large' : ''}`}>
+      <div className="video-frame">
+        {activated ? (
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`}
+            title="Health advice from our doctors"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : (
+          <>
+            <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="Video thumbnail: Health advice from our doctors" loading="lazy" />
+            <button className="video-play" type="button" aria-label="Play Health advice from our doctors" data-testid={`button-play-video-${videoId}`} onClick={() => setActivated(true)}>
+              <span className="play-icon"><Play size={23} fill="currentColor" strokeWidth={1.5} /></span>
+            </button>
+          </>
+        )}
+      </div>
+      <a className="video-caption" href={youtubeChannel} target="_blank" rel="noreferrer" data-testid={`link-video-channel-${videoId}`}>
+        Health advice from our doctors <ArrowRight size={13} aria-hidden="true" />
+      </a>
+    </article>
+  );
+}
+
+function Videos() {
+  return (
+    <section className="section section-dark videos" id="videos" aria-labelledby="videos-heading">
+      <div className="container">
+        <div className="section-heading reveal">
+          <span className="eyebrow" style={{ color: '#C6E10A' }}>From our doctors</span>
+          <h2 id="videos-heading">Health, in <em>conversation.</em></h2>
+          <p>Watch health advice from our doctors. Video players load only when you choose to play.</p>
+        </div>
+        <div className="video-layout reveal">
+          <VideoCard videoId="aqTzReeaaTY" large />
+          <div className="video-stack">
+            <VideoCard videoId="g-w7LMnzEa4" />
+            <VideoCard videoId="-HCu-2afK34" />
+          </div>
+        </div>
+        <a className="channel-link" href={youtubeChannel} target="_blank" rel="noreferrer" data-testid="link-youtube-channel">Visit our YouTube channel <ArrowRight size={15} /></a>
+      </div>
+    </section>
+  );
+}
+
+function Reviews() {
+  return (
+    <section className="section" id="reviews" aria-labelledby="reviews-heading">
+      <div className="container">
+        <div className="section-heading reveal">
+          <span className="eyebrow">Patient experiences</span>
+          <h2 id="reviews-heading">Words from our <em>community.</em></h2>
+          <p>Experiences shared by people who have visited Sri Sai Hospital.</p>
+        </div>
+        <div className="review-summary reveal">
+          <div className="review-rating"><span>5.0</span><span className="review-stars" aria-label="5 stars">★★★★★</span></div>
+          <span className="review-count">· 31 Google reviews</span>
+        </div>
+        <div className="review-grid">
+          {reviews.map((review, index) => (
+            <article className={`review-card reveal reveal-delay-${(index % 2) + 1}`} key={review.name} data-testid={`card-review-${index + 1}`}>
+              <blockquote>“{review.quote}”</blockquote>
+              <div className="review-by"><span>{review.name}</span><time>{review.age}</time></div>
+            </article>
+          ))}
+        </div>
+        <div className="reviews-action reveal"><a className="button button-outline" href={reviewsUrl} target="_blank" rel="noreferrer" data-testid="button-more-google-reviews">More Google reviews <ArrowRight size={16} /></a></div>
+      </div>
+    </section>
+  );
+}
+
+function Visit() {
+  return (
+    <section className="section section-white visit-section" id="visit" aria-labelledby="visit-heading">
+      <div className="container">
+        <div className="section-heading reveal">
+          <span className="eyebrow">Find us in Tanuku</span>
+          <h2 id="visit-heading">We’re here when <em>you need us.</em></h2>
+          <p>Plan your visit or call the hospital for assistance.</p>
+        </div>
+        <div className="visit-grid">
+          <div className="visit-panel reveal">
+            <div className="visit-block">
+              <p className="visit-label">Address</p>
+              <p className="visit-value address">DRNO.28-6-15, Sri Matha Tower, Velpur Road, Tanuku, West Godavari, Andhra Pradesh 534211</p>
+              <div className="visit-actions">
+                <a className="button button-primary" href={`tel:${phone}`} data-testid="button-call-visit"><PhoneIcon /> +91 88192 24466</a>
+                <a className="button button-outline" href={whatsapp} target="_blank" rel="noreferrer" data-testid="button-whatsapp-visit"><MessageCircle size={16} /> WhatsApp</a>
+              </div>
+            </div>
+            <div className="visit-block">
+              <p className="visit-label">Consultation hours</p>
+              <table className="hours-table">
+                <tbody>
+                  <tr><td>Monday–Saturday · Morning</td><td>9:30 AM – 2:00 PM</td></tr>
+                  <tr><td>Monday–Saturday · Evening</td><td>5:30 PM – 8:30 PM</td></tr>
+                  <tr><td>1st and 3rd Sunday</td><td>9:30 AM – 2:00 PM</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="visit-block">
+              <p className="visit-label">Casualty</p>
+              <p className="visit-value">24-hour casualty services</p>
+            </div>
+          </div>
+          <div className="map-frame reveal reveal-delay-1">
+            <iframe
+              title="Sri Sai Hospital, Velpur Road, Tanuku"
+              data-testid="frame-hospital-map"
+              src="https://www.google.com/maps?q=16.7536433,81.6862207&z=17&output=embed"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="footer">
+      <div className="container">
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <img src="/assets/sri-sai-hospital-logo.png" alt="Sri Sai Hospital emblem" loading="lazy" />
+            <h2>Sri Sai Hospital</h2>
+            <p className="font-telugu" lang="te">బిజ్జం వారి శ్రీ సాయి హాస్పిటల్</p>
+          </div>
+          <div>
+            <p className="footer-label">Explore</p>
+            <nav className="footer-nav" aria-label="Footer navigation">
+              <a href="#services" data-testid="link-footer-services">Services</a><a href="#doctors" data-testid="link-footer-doctors">Our doctors</a>
+              <a href="#gallery" data-testid="link-footer-hospital">Hospital</a><a href="#videos" data-testid="link-footer-videos">Health videos</a>
+              <a href="#reviews" data-testid="link-footer-reviews">Reviews</a><a href="#visit" data-testid="link-footer-visit">Visit us</a>
+            </nav>
+            <div className="footer-social" style={{ marginTop: 22 }}>
+              <a href={youtubeChannel} target="_blank" rel="noreferrer" data-testid="link-footer-youtube">YouTube channel</a>
+            </div>
+          </div>
+          <aside className="crisis-box" aria-label="Crisis and emergency information">
+            <h3>If you are in crisis:</h3>
+            <p><strong>Tele-MANAS, 14416</strong> (free, 24 hours). For a medical emergency, call <strong>112</strong> or the casualty number.</p>
+          </aside>
+        </div>
+        <div className="footer-bottom">
+          <p>Information only. This website does not replace a consultation or emergency care.</p>
+          <p>Sri Sai Hospital · Tanuku</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+function MobileActions() {
+  return (
+    <div className="mobile-actions" aria-label="Quick contact">
+      <a className="call" href={`tel:${phone}`} data-testid="button-call-mobile"><PhoneIcon /> Call</a>
+      <a className="whatsapp" href={whatsapp} target="_blank" rel="noreferrer" data-testid="button-whatsapp-mobile"><MessageCircle size={17} /> WhatsApp</a>
+    </div>
+  );
+}
+
+function App() {
+  useReveal();
+  useMagneticButtons();
+  return (
+    <>
+      <ProgressLine />
+      <SiteHeader />
+      <main>
+        <Hero />
+        <Services />
+        <Doctors />
+        <Gallery />
+        <Videos />
+        <Reviews />
+        <Visit />
+      </main>
+      <Footer />
+      <MobileActions />
+    </>
+  );
+}
+
+export default App;
