@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { CalendarDays, Check, PhoneCall } from 'lucide-react';
+import { Check, PhoneCall } from 'lucide-react';
 
 const doctors = [
   {
@@ -10,6 +10,8 @@ const doctors = [
     image: '/assets/doctor-sritha.png',
     alt: 'Portrait of Dr. Sritha',
     bookingName: 'Dr. Sritha',
+    // DRAFT: pending doctor approval
+    caption: "Consultations begin with listening to the patient's concerns, then explaining what the evaluation will cover and why.",
     areas: [
       'Psychiatry and behavioural health',
       'Neurological evaluation',
@@ -25,6 +27,8 @@ const doctors = [
     image: '/assets/doctor-jayavardhan-reddy.png',
     alt: 'Portrait of Dr. Jayavardhan Reddy Bijjam',
     bookingName: 'Dr. Jayavardhan',
+    // DRAFT: pending doctor approval
+    caption: 'Diabetes and blood pressure care continues over time, with clear explanations and regular follow-up.',
     areas: [
       'General medicine',
       'Diabetes management',
@@ -35,7 +39,6 @@ const doctors = [
 ];
 
 const phone = '+918819224466';
-const whatsapp = 'https://wa.me/918819224466';
 
 function useDoctorPortraitEffects() {
   useEffect(() => {
@@ -52,21 +55,20 @@ function useDoctorPortraitEffects() {
       const y = (event.clientY - rect.top) / rect.height;
       portrait.style.setProperty('--spotlight-x', `${x * 100}%`);
       portrait.style.setProperty('--spotlight-y', `${y * 100}%`);
-      portrait.style.setProperty('--portrait-tilt-x', `${(0.5 - y) * 8}deg`);
-      portrait.style.setProperty('--portrait-tilt-y', `${(x - 0.5) * 8}deg`);
+      const tiltX = (0.5 - y) * 8;
+      const tiltY = (x - 0.5) * 8;
+      portrait.style.transform = `perspective(1200px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`;
     };
     const reset = (event: PointerEvent) => {
       const portrait = event.currentTarget as HTMLElement;
       portrait.style.setProperty('--spotlight-x', '50%');
       portrait.style.setProperty('--spotlight-y', '50%');
-      portrait.style.setProperty('--portrait-tilt-x', '0deg');
-      portrait.style.setProperty('--portrait-tilt-y', '0deg');
+      portrait.style.removeProperty('transform');
     };
     const onMotionChange = () => {
       if (reducedMotion.matches) {
         portraits.forEach((portrait) => {
-          portrait.style.setProperty('--portrait-tilt-x', '0deg');
-          portrait.style.setProperty('--portrait-tilt-y', '0deg');
+          portrait.style.removeProperty('transform');
           portrait.style.setProperty('--spotlight-x', '50%');
           portrait.style.setProperty('--spotlight-y', '50%');
         });
@@ -97,7 +99,7 @@ export function DoctorsSection() {
         <div className="section-heading reveal">
           <span className="eyebrow">Meet your doctors</span>
           <h2 id="doctors-heading">Our doctors</h2>
-          <p>Specialists who see patients at Sri Sai Hospital, Tanuku.</p>
+          <p>Specialists who see patients at Sri Siri Hospital, Tanuku.</p>
         </div>
         <div className="doctor-grid">
           {doctors.map((doctor, doctorIndex) => (
@@ -110,7 +112,7 @@ export function DoctorsSection() {
                 <img
                   src={doctor.image}
                   alt={doctor.alt}
-                  loading="lazy"
+                  loading="eager"
                   data-testid={`image-doctor-${doctorIndex + 1}`}
                 />
               </div>
@@ -118,23 +120,23 @@ export function DoctorsSection() {
                 <span className="doctor-specialty doctor-staged" style={{ transitionDelay: '0ms' }} data-testid={`text-doctor-specialty-${doctorIndex + 1}`}>
                   {doctor.specialty}
                 </span>
-                <h3 className="doctor-name doctor-staged" style={{ transitionDelay: '120ms' }} data-testid={`text-doctor-name-${doctorIndex + 1}`}>
+                <h3 className="doctor-name doctor-staged" style={{ transitionDelay: '90ms' }} data-testid={`text-doctor-name-${doctorIndex + 1}`}>
                   {doctor.name}
                 </h3>
-                <p className="doctor-degree doctor-staged" style={{ transitionDelay: '240ms' }} data-testid={`text-doctor-degree-${doctorIndex + 1}`}>
+                <p className="doctor-degree doctor-staged" style={{ transitionDelay: '180ms' }} data-testid={`text-doctor-degree-${doctorIndex + 1}`}>
                   {doctor.degree}
                 </p>
-                <p className="doctor-reg doctor-staged" style={{ transitionDelay: '360ms' }} data-testid={`text-doctor-registration-${doctorIndex + 1}`}>
+                <p className="doctor-reg doctor-staged" style={{ transitionDelay: '270ms' }} data-testid={`text-doctor-registration-${doctorIndex + 1}`}>
                   {doctor.registration}
                 </p>
-                <hr className="doctor-divider doctor-staged" style={{ transitionDelay: '480ms' }} />
-                <p className="doctor-focus-heading doctor-staged" style={{ transitionDelay: '600ms' }}>Areas of care</p>
+                <hr className="doctor-divider doctor-staged" style={{ transitionDelay: '360ms' }} />
+                <p className="doctor-focus-heading doctor-staged" style={{ transitionDelay: '450ms' }}>Areas of care</p>
                 <ul className="focus-list">
                   {doctor.areas.map((area, areaIndex) => (
                     <li
                       key={area}
                       className="doctor-focus-item"
-                      style={{ transitionDelay: `${720 + areaIndex * 120}ms` }}
+                      style={{ transitionDelay: `${540 + areaIndex * 90}ms` }}
                       data-testid={`text-doctor-focus-${doctorIndex + 1}-${areaIndex + 1}`}
                     >
                       <Check size={17} aria-hidden="true" />
@@ -142,21 +144,19 @@ export function DoctorsSection() {
                     </li>
                   ))}
                 </ul>
-                <div className="doctor-actions doctor-staged" style={{ transitionDelay: '1200ms' }}>
+                <div className="doctor-caption doctor-staged" style={{ transitionDelay: '810ms' }}>
+                  <h4>What patients can expect</h4>
+                  <p>{doctor.caption}</p>
+                </div>
+                <div className="doctor-actions doctor-staged" style={{ transitionDelay: '900ms' }}>
                   <a
                     className="button button-primary"
-                    href={whatsapp}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`Book with ${doctor.bookingName}`}
+                    href={`tel:${phone}`}
+                    aria-label={`Call Sri Siri Hospital to book with ${doctor.bookingName}`}
                     data-testid={`button-book-doctor-${doctorIndex + 1}`}
                   >
-                    <CalendarDays size={17} />
+                    <PhoneCall size={17} aria-hidden="true" />
                     Book with {doctor.bookingName}
-                  </a>
-                  <a className="doctor-call-link" href={`tel:${phone}`} data-testid={`link-call-doctor-${doctorIndex + 1}`}>
-                    <PhoneCall size={15} aria-hidden="true" />
-                    Call +91 88192 24466
                   </a>
                 </div>
               </div>
