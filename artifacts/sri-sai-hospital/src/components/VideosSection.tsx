@@ -4,9 +4,9 @@ import { ArrowRight, Pause, Play, Volume2, VolumeX } from 'lucide-react';
 const youtubeChannel = 'https://www.youtube.com/channel/UCoZrqTftw_z7tXwagHrw2oA';
 
 const videos = [
-  { id: 'aqTzReeaaTY', title: 'DEALING WITH EXAMNATION', summary: 'A short health talk from Sri Siri Hospital. Summary to be added by the doctor.' },
-  { id: 'g-w7LMnzEa4', title: 'MEDICATIONS DURING COVID VACCINATION?', summary: 'A short health talk from Sri Siri Hospital. Summary to be added by the doctor.' },
-  { id: '-HCu-2afK34', title: 'HOW TO DEAL WITH STRESS PART 1', summary: 'A short health talk from Sri Siri Hospital. Summary to be added by the doctor.' },
+  { id: 'aqTzReeaaTY', title: 'DEALING WITH EXAMNATION' },
+  { id: 'g-w7LMnzEa4', title: 'MEDICATIONS DURING COVID VACCINATION?' },
+  { id: '-HCu-2afK34', title: 'HOW TO DEAL WITH STRESS PART 1' },
 ];
 
 type YouTubePlayerStateEvent = { data: number };
@@ -369,7 +369,6 @@ export function VideosSection() {
               <div className={`video-details${isSwitching ? ' is-switching' : ''}`} aria-live="polite">
                 {isPlayerReady && !isPlaying && <span className="video-playing-status">Paused</span>}
                 <h3 id="video-main-title">{activeVideo.title}</h3>
-                <p>{activeVideo.summary}</p>
                 <a href={`https://www.youtube.com/watch?v=${activeVideo.id}`} target="_blank" rel="noopener noreferrer">
                   Watch on YouTube <ArrowRight size={15} aria-hidden="true" />
                 </a>
