@@ -22,3 +22,7 @@ The placeholders are original vector artwork, not photographs. No hospital, room
 - `public/assets/doctor-sritha.png` — supplied portrait, shown unchanged
 - `public/assets/doctor-jayavardhan-reddy.png` — supplied portrait, shown unchanged
 
+## Video titles and summaries
+
+The three video IDs, titles, and summaries are kept together in the `videos` array at the top of `src/components/VideosSection.tsx`. Replace each placeholder title and summary with doctor-approved copy when it is available.
+

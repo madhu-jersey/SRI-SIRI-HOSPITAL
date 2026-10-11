@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Activity, ArrowRight, Brain, CalendarDays, Check, Clock3,
-  HeartPulse, MapPin, Menu, MessageCircle, Play, Stethoscope, X,
+  Activity, ArrowRight, Brain, Clock3,
+  HeartPulse, MapPin, Menu, MessageCircle, Stethoscope, X,
 } from 'lucide-react';
+import { DoctorsSection } from './components/DoctorsSection';
+import { HeroDotField } from './components/HeroDotField';
+import { VideosSection } from './components/VideosSection';
 
 const phone = '+918819224466';
 const whatsapp = 'https://wa.me/918819224466';
@@ -17,25 +20,6 @@ const services = [
   { title: 'Psychiatry and mental health', text: 'Thoughtful, evidence-based care for mental health and behavioural conditions.', Icon: HeartPulse },
   { title: 'Migraine and headache treatment', text: 'Diagnosis and management of migraine, cluster headaches, and chronic head pain.', Icon: Brain },
   { title: 'Critical care and casualty, 24 hours', text: 'Round-the-clock emergency care for acute medical situations and casualties.', Icon: Clock3 },
-];
-
-const doctors = [
-  {
-    name: 'Dr. Sritha',
-    degree: 'MBBS, MD (Neuro-Psychiatry)',
-    reg: 'APMC Reg. No. 85598',
-    image: '/assets/doctor-sritha.png',
-    alt: 'Portrait of Dr. Sritha',
-    focus: ['Psychiatry and behavioural health', 'Neurological evaluation', 'Migraine and headache disorders', 'Anxiety and stress management'],
-  },
-  {
-    name: 'Dr. Jayavardhan Reddy Bijjam',
-    degree: 'MBBS, MD (Physician)',
-    reg: 'APMC Reg. No. 77460',
-    image: '/assets/doctor-jayavardhan-reddy.png',
-    alt: 'Portrait of Dr. Jayavardhan Reddy Bijjam',
-    focus: ['General medicine', 'Diabetes management', 'Hypertension care', 'Acute medical fevers'],
-  },
 ];
 
 const gallery = [
@@ -76,125 +60,6 @@ function useClinicStatus() {
     return () => window.clearInterval(timer);
   }, []);
   return isOpen;
-}
-
-function DotField() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const heroRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const hero = canvas?.parentElement;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !hero || !ctx) return;
-    heroRef.current = hero;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let width = 0;
-    let height = 0;
-    let frame = 0;
-    let visible = true;
-    let pointer = { x: -1000, y: -1000 };
-    let points: { x: number; y: number; homeX: number; homeY: number; vx: number; vy: number; radius: number; alpha: number; depth: number }[] = [];
-    const resize = () => {
-      const rect = hero.getBoundingClientRect();
-      width = rect.width;
-      height = rect.height;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = Math.round(width * dpr);
-      canvas.height = Math.round(height * dpr);
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const count = window.innerWidth < 768 ? 30 : window.innerWidth < 1280 ? 45 : 60;
-      points = Array.from({ length: count }, (_, index) => {
-        const x = Math.random() * width;
-        const y = Math.random() * height;
-        const depth = index % 3;
-        return { x, y, homeX: x, homeY: y, vx: 0, vy: 0, radius: 1 + Math.random() * 1, alpha: .1 + Math.random() * .25, depth };
-      });
-      draw(true);
-    };
-    const draw = (staticOnly = false) => {
-      ctx.clearRect(0, 0, width, height);
-      const copy = hero.querySelector('.hero-copy')?.getBoundingClientRect();
-      const status = hero.querySelector('.status-card')?.getBoundingClientRect();
-      const exclusions = [copy, status].filter((rect): rect is DOMRect => Boolean(rect)).map((rect) => ({
-        left: rect.left - hero.getBoundingClientRect().left - 14,
-        right: rect.right - hero.getBoundingClientRect().left + 14,
-        top: rect.top - hero.getBoundingClientRect().top - 10,
-        bottom: rect.bottom - hero.getBoundingClientRect().top + 10,
-      }));
-      points.forEach((point) => {
-        if (!staticOnly && !reduced.matches) {
-          const dx = point.x - pointer.x;
-          const dy = point.y - pointer.y;
-          const distance = Math.hypot(dx, dy);
-          if (distance < 115 && distance > 0) {
-            const force = (115 - distance) / 115 * (0.7 + point.depth * .45);
-            point.vx += dx / distance * force * .045;
-            point.vy += dy / distance * force * .045;
-          }
-          point.vx += (point.homeX - point.x) * .0019;
-          point.vy += (point.homeY - point.y) * .0019;
-          point.vx *= .91;
-          point.vy *= .91;
-          point.x += point.vx * (0.55 + point.depth * .32);
-          point.y += point.vy * (0.55 + point.depth * .32);
-          point.x += Math.sin(performance.now() / (2300 + point.depth * 800) + point.homeX) * .018;
-        }
-        if (exclusions.some((rect) => point.x > rect.left && point.x < rect.right && point.y > rect.top && point.y < rect.bottom)) return;
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(22, 30, 27, ${point.alpha})`;
-        ctx.arc(point.x, point.y, point.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-    };
-    const animate = () => {
-      if (!visible || document.hidden) return;
-      draw();
-      if (!reduced.matches) frame = window.requestAnimationFrame(animate);
-    };
-    const onPointer = (event: PointerEvent) => {
-      const rect = hero.getBoundingClientRect();
-      pointer = { x: event.clientX - rect.left, y: event.clientY - rect.top };
-    };
-    const observer = new IntersectionObserver(([entry]) => {
-      visible = entry.isIntersecting;
-      if (visible && !document.hidden) {
-        cancelAnimationFrame(frame);
-        draw(reduced.matches);
-        if (!reduced.matches) frame = requestAnimationFrame(animate);
-      } else cancelAnimationFrame(frame);
-    });
-    observer.observe(hero);
-    const onVisibility = () => {
-      if (document.hidden) cancelAnimationFrame(frame);
-      else if (visible) {
-        draw(reduced.matches);
-        if (!reduced.matches) frame = requestAnimationFrame(animate);
-      }
-    };
-    const onMotion = () => {
-      cancelAnimationFrame(frame);
-      draw(reduced.matches);
-      if (!reduced.matches && visible && !document.hidden) frame = requestAnimationFrame(animate);
-    };
-    const onResize = () => resize();
-    resize();
-    if (!reduced.matches) frame = requestAnimationFrame(animate);
-    hero.addEventListener('pointermove', onPointer, { passive: true });
-    window.addEventListener('resize', onResize);
-    document.addEventListener('visibilitychange', onVisibility);
-    reduced.addEventListener('change', onMotion);
-    return () => {
-      observer.disconnect();
-      cancelAnimationFrame(frame);
-      hero.removeEventListener('pointermove', onPointer);
-      window.removeEventListener('resize', onResize);
-      document.removeEventListener('visibilitychange', onVisibility);
-      reduced.removeEventListener('change', onMotion);
-    };
-  }, []);
-  return <canvas ref={canvasRef} className="hero-canvas" aria-hidden="true" />;
 }
 
 function SiteHeader() {
@@ -316,7 +181,7 @@ function Hero() {
   const isOpen = useClinicStatus();
   return (
     <section className="hero" id="home" aria-labelledby="hero-title">
-      <DotField />
+      <HeroDotField />
       <div className="container hero-inner">
         <div className="hero-copy">
           <span className="hero-pill"><span aria-hidden="true" /> Sri Sai Hospital · Tanuku</span>
@@ -349,6 +214,15 @@ function Hero() {
   );
 }
 
+function EmergencyStrip() {
+  return (
+    <div className="emergency-strip" data-testid="text-emergency-contact">
+      <p>24-hour casualty and emergency care</p>
+      <a href={`tel:${phone}`} data-testid="button-call-emergency"><PhoneIcon /> +91 88192 24466</a>
+    </div>
+  );
+}
+
 function Services() {
   return (
     <section className="section" id="services" aria-labelledby="services-heading">
@@ -373,32 +247,7 @@ function Services() {
 }
 
 function Doctors() {
-  return (
-    <section className="section section-white doctors-section" id="doctors" aria-labelledby="doctors-heading">
-      <div className="container">
-        <div className="section-heading reveal">
-          <span className="eyebrow">Meet your doctors</span>
-          <h2 id="doctors-heading">Expertise with a <em>human touch.</em></h2>
-          <p>Meet the doctors supporting neurological, mental and general medical care at Sri Sai Hospital.</p>
-        </div>
-        <div className="doctor-grid">
-          {doctors.map((doctor, index) => (
-            <article className={`doctor-card reveal reveal-delay-${index + 1}`} key={doctor.name}>
-              <div className="doctor-image"><img src={doctor.image} alt={doctor.alt} loading="lazy" data-testid={`image-doctor-${index + 1}`} /></div>
-              <div className="doctor-info">
-                <h3>{doctor.name}</h3>
-                <p className="doctor-degree">{doctor.degree}</p>
-                <p className="doctor-reg">{doctor.reg}</p>
-                <p className="focus-label">Areas of focus</p>
-                <ul className="focus-list">{doctor.focus.map((item) => <li key={item}><Check size={15} aria-hidden="true" />{item}</li>)}</ul>
-                <a className="button button-primary" href={`tel:${phone}`} aria-label={`Book with ${doctor.name}`} data-testid={`button-book-doctor-${index + 1}`}><CalendarDays size={16} /> Book with {doctor.name}</a>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
+  return <DoctorsSection />;
 }
 
 function Gallery() {
@@ -423,55 +272,8 @@ function Gallery() {
   );
 }
 
-function VideoCard({ videoId, large = false }: { videoId: string; large?: boolean }) {
-  const [activated, setActivated] = useState(false);
-  return (
-    <article className={`video-card${large ? ' video-large' : ''}`}>
-      <div className="video-frame">
-        {activated ? (
-          <iframe
-            src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`}
-            title="Health advice from our doctors"
-            loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
-        ) : (
-          <>
-            <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="Video thumbnail: Health advice from our doctors" loading="lazy" />
-            <button className="video-play" type="button" aria-label="Play Health advice from our doctors" data-testid={`button-play-video-${videoId}`} onClick={() => setActivated(true)}>
-              <span className="play-icon"><Play size={23} fill="currentColor" strokeWidth={1.5} /></span>
-            </button>
-          </>
-        )}
-      </div>
-      <a className="video-caption" href={youtubeChannel} target="_blank" rel="noreferrer" data-testid={`link-video-channel-${videoId}`}>
-        Health advice from our doctors <ArrowRight size={13} aria-hidden="true" />
-      </a>
-    </article>
-  );
-}
-
 function Videos() {
-  return (
-    <section className="section section-dark videos" id="videos" aria-labelledby="videos-heading">
-      <div className="container">
-        <div className="section-heading reveal">
-          <span className="eyebrow" style={{ color: '#C6E10A' }}>From our doctors</span>
-          <h2 id="videos-heading">Health, in <em>conversation.</em></h2>
-          <p>Watch health advice from our doctors. Video players load only when you choose to play.</p>
-        </div>
-        <div className="video-layout reveal">
-          <VideoCard videoId="aqTzReeaaTY" large />
-          <div className="video-stack">
-            <VideoCard videoId="g-w7LMnzEa4" />
-            <VideoCard videoId="-HCu-2afK34" />
-          </div>
-        </div>
-        <a className="channel-link" href={youtubeChannel} target="_blank" rel="noreferrer" data-testid="link-youtube-channel">Visit our YouTube channel <ArrowRight size={15} /></a>
-      </div>
-    </section>
-  );
+  return <VideosSection />;
 }
 
 function Reviews() {
@@ -604,6 +406,7 @@ function App() {
       <SiteHeader />
       <main>
         <Hero />
+        <EmergencyStrip />
         <Services />
         <Doctors />
         <Gallery />
