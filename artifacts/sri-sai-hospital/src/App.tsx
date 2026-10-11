@@ -778,7 +778,7 @@ function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-brand reveal" style={{ '--footer-index': 0 } as React.CSSProperties}>
-            <img src="/assets/sri-siri-hospital-logo.png" alt="Sri Siri Hospital logo" loading="lazy" />
+            <img src="/assets/sri-siri-hospital-logo.png" alt="Sri Siri Hospital logo" />
             <h2>Sri Siri Hospital</h2>
             <p className="font-telugu" lang="te">బిజ్జం వారి శ్రీ సిరి హాస్పిటల్</p>
             <p className="footer-location">Tanuku, West Godavari, Andhra Pradesh</p>

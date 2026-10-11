@@ -8,9 +8,10 @@ To add a photo, place the file in public/assets/gallery/ and set src in src/data
 
 ## Supplied assets
 
-- `public/assets/sri-siri-hospital-logo.png` — supplied hospital emblem
-- `public/assets/doctor-sritha.png` — supplied portrait, shown unchanged
-- `public/assets/doctor-jayavardhan-reddy.png` — supplied portrait, shown unchanged
+- `public/assets/sri-siri-hospital-logo.png` — optimized, transparent hospital emblem
+- `public/assets/doctor-sritha.webp` — optimized portrait
+- `public/assets/doctor-jayavardhan-reddy.webp` — optimized portrait
+- `original-assets/` — unmodified copies of the supplied image files
 
 ## Video titles and summaries
 

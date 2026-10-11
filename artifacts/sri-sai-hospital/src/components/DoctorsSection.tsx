@@ -7,7 +7,7 @@ const doctors = [
     specialty: 'Neuro-Psychiatry',
     degree: 'MBBS, MD (Neuro-Psychiatry)',
     registration: 'APMC Reg. No. 85598',
-    image: '/assets/doctor-sritha.png',
+    image: '/assets/doctor-sritha.webp',
     alt: 'Portrait of Dr. Sritha',
     bookingName: 'Dr. Sritha',
     // DRAFT: pending doctor approval
@@ -24,7 +24,7 @@ const doctors = [
     specialty: 'General Medicine',
     degree: 'MBBS, MD (Physician)',
     registration: 'APMC Reg. No. 77460',
-    image: '/assets/doctor-jayavardhan-reddy.png',
+    image: '/assets/doctor-jayavardhan-reddy.webp',
     alt: 'Portrait of Dr. Jayavardhan Reddy Bijjam',
     bookingName: 'Dr. Jayavardhan',
     // DRAFT: pending doctor approval
@@ -112,7 +112,9 @@ export function DoctorsSection() {
                 <img
                   src={doctor.image}
                   alt={doctor.alt}
-                  loading="eager"
+                  width={864}
+                  height={1244}
+                  loading="lazy"
                   data-testid={`image-doctor-${doctorIndex + 1}`}
                 />
               </div>
@@ -120,23 +122,23 @@ export function DoctorsSection() {
                 <span className="doctor-specialty doctor-staged" style={{ transitionDelay: '0ms' }} data-testid={`text-doctor-specialty-${doctorIndex + 1}`}>
                   {doctor.specialty}
                 </span>
-                <h3 className="doctor-name doctor-staged" style={{ transitionDelay: '90ms' }} data-testid={`text-doctor-name-${doctorIndex + 1}`}>
+                <h3 className="doctor-name doctor-staged" style={{ transitionDelay: '60ms' }} data-testid={`text-doctor-name-${doctorIndex + 1}`}>
                   {doctor.name}
                 </h3>
-                <p className="doctor-degree doctor-staged" style={{ transitionDelay: '180ms' }} data-testid={`text-doctor-degree-${doctorIndex + 1}`}>
+                <p className="doctor-degree doctor-staged" style={{ transitionDelay: '120ms' }} data-testid={`text-doctor-degree-${doctorIndex + 1}`}>
                   {doctor.degree}
                 </p>
-                <p className="doctor-reg doctor-staged" style={{ transitionDelay: '270ms' }} data-testid={`text-doctor-registration-${doctorIndex + 1}`}>
+                <p className="doctor-reg doctor-staged" style={{ transitionDelay: '180ms' }} data-testid={`text-doctor-registration-${doctorIndex + 1}`}>
                   {doctor.registration}
                 </p>
-                <hr className="doctor-divider doctor-staged" style={{ transitionDelay: '360ms' }} />
-                <p className="doctor-focus-heading doctor-staged" style={{ transitionDelay: '450ms' }}>Areas of care</p>
+                <hr className="doctor-divider doctor-staged" style={{ transitionDelay: '240ms' }} />
+                <p className="doctor-focus-heading doctor-staged" style={{ transitionDelay: '300ms' }}>Areas of care</p>
                 <ul className="focus-list">
                   {doctor.areas.map((area, areaIndex) => (
                     <li
                       key={area}
                       className="doctor-focus-item"
-                      style={{ transitionDelay: `${540 + areaIndex * 90}ms` }}
+                      style={{ transitionDelay: `${360 + areaIndex * 60}ms` }}
                       data-testid={`text-doctor-focus-${doctorIndex + 1}-${areaIndex + 1}`}
                     >
                       <Check size={17} aria-hidden="true" />
@@ -144,11 +146,11 @@ export function DoctorsSection() {
                     </li>
                   ))}
                 </ul>
-                <div className="doctor-caption doctor-staged" style={{ transitionDelay: '810ms' }}>
+                <div className="doctor-caption doctor-staged" style={{ transitionDelay: '600ms' }}>
                   <h4>What patients can expect</h4>
                   <p>{doctor.caption}</p>
                 </div>
-                <div className="doctor-actions doctor-staged" style={{ transitionDelay: '900ms' }}>
+                <div className="doctor-actions doctor-staged" style={{ transitionDelay: '660ms' }}>
                   <a
                     className="button button-primary"
                     href={`tel:${phone}`}
