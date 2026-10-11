@@ -349,11 +349,6 @@ export function VideosSection() {
             <div className="video-player reveal" data-testid="player-current-video" aria-labelledby="video-main-title">
               <div className={`video-frame${isSwitching ? ' is-switching' : ''}`} ref={videoFrameRef}>
                 <div className="youtube-player-mount" ref={playerMountRef} title={activeVideo.title} />
-                {isPlaying && isMuted && (
-                  <span className="video-tap-unmute" aria-hidden="true">
-                    <Volume2 size={14} aria-hidden="true" /> Tap to unmute
-                  </span>
-                )}
                 {playerError && <p className="video-error" role="status">{playerError}</p>}
               </div>
               <div className="video-control-row" aria-label="Video controls">
@@ -363,6 +358,7 @@ export function VideosSection() {
                 <button className="video-control" type="button" onClick={toggleMute} disabled={!isPlayerReady} aria-label={isMuted ? 'Unmute video' : 'Mute video'}>
                   {isMuted ? <VolumeX size={17} aria-hidden="true" /> : <Volume2 size={17} aria-hidden="true" />}
                 </button>
+                {isMuted && <span className="video-mute-hint">Tap to unmute</span>}
                 <div className="video-progress-group">
                   <div className="video-progress" ref={progressBarRef} role="progressbar" aria-label="Video progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={0}>
                     <span ref={progressFillRef} />
@@ -389,8 +385,8 @@ export function VideosSection() {
               className="video-queue-items"
               style={{
                 '--queue-active-index': activeIndex,
-                '--queue-active-y': `${activeIndex * 91}px`,
-                '--queue-active-mobile-y': `${activeIndex * 72}px`,
+                '--queue-active-y': `${activeIndex * 68}px`,
+                '--queue-active-mobile-y': `${activeIndex * 68}px`,
                 '--queue-active-x': `calc(${activeIndex * 100}% + ${activeIndex * 12}px)`,
               } as React.CSSProperties}
             >

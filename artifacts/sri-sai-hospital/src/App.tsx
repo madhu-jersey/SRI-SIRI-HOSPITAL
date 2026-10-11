@@ -576,7 +576,7 @@ function Gallery() {
         </div>
         <div className="gallery-preview-grid">
           {galleryItems.map((item, index) => (
-            <div className="gallery-preview-card reveal" key={item.id} style={{ '--gallery-index': index } as React.CSSProperties}>
+            <div className={`gallery-preview-card gallery-preview-card--${item.category} reveal`} key={item.id} style={{ '--gallery-index': index } as React.CSSProperties}>
               {item.src ? (
                 <img src={item.src} alt={item.alt} loading="lazy" data-testid={`image-hospital-${index + 1}`} />
               ) : (
@@ -700,6 +700,7 @@ function Reviews() {
 
 function Visit() {
   const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapInteractive, setMapInteractive] = useState(false);
   return (
     <section className="section section-white visit-section" id="visit" aria-labelledby="visit-heading">
       <div className="container">
@@ -738,7 +739,10 @@ function Visit() {
               <p className="visit-value"><span className="casualty-dot" aria-hidden="true" />24-hour casualty services</p>
             </div>
           </div>
-          <div className={`map-frame reveal${mapLoaded ? ' is-loaded' : ''}`} data-testid="card-hospital-map">
+          <div
+            className={`map-frame reveal${mapLoaded ? ' is-loaded' : ''}${mapInteractive ? ' is-interactive' : ''}`}
+            data-testid="card-hospital-map"
+          >
             <div className="map-shimmer" aria-hidden="true" />
             <a className="map-directions" href={directions} target="_blank" rel="noopener noreferrer" aria-label="Go to Sri Siri Hospital location in Google Maps" data-testid="link-go-to-location">
               <MapPin size={17} strokeWidth={1.8} aria-hidden="true" /> Go to location
@@ -752,6 +756,14 @@ function Visit() {
               allowFullScreen
               onLoad={() => setMapLoaded(true)}
             />
+            {!mapInteractive && (
+              <button
+                className="map-interaction-enable"
+                type="button"
+                aria-label="Enable map interaction"
+                onClick={() => setMapInteractive(true)}
+              />
+            )}
           </div>
         </div>
       </div>
