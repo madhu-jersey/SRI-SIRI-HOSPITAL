@@ -105,6 +105,7 @@ export function DoctorsSection() {
           {doctors.map((doctor, doctorIndex) => (
             <article
               className={`doctor-card reveal reveal-delay-${doctorIndex + 1}`}
+              id={doctorIndex === 0 ? 'doctor-sritha' : 'doctor-jayavardhan'}
               key={doctor.name}
               data-testid={`card-doctor-${doctorIndex + 1}`}
             >

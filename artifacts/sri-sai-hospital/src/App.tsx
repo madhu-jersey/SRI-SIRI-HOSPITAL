@@ -5,6 +5,7 @@ import {
 import { DoctorsSection } from './components/DoctorsSection';
 import { HeroDotField } from './components/HeroDotField';
 import { VideosSection } from './components/VideosSection';
+import { FaqPage, WhyChoosePage } from './components/InfoPages';
 import { galleryItems } from './data/gallery';
 
 const GalleryPage = lazy(() => import('./components/GalleryPage').then((module) => ({ default: module.GalleryPage })));
@@ -13,6 +14,19 @@ const phone = '+918819224466';
 const directions = 'https://www.google.com/maps/dir/?api=1&destination=16.7536433,81.6862207';
 const reviewsUrl = 'https://www.google.com/maps/place/Sri+Siri+hospital/@16.7536484,81.6836458,840m/data=!3m1!1e3!4m18!1m9!3m8!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!2sSri+Siri+hospital!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn!3m7!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn?entry=ttu';
 const youtubeChannel = 'https://www.youtube.com/channel/UCoZrqTftw_z7tXwagHrw2oA';
+
+type PageRoute = 'home' | 'gallery' | 'faq' | 'why-choose';
+
+function getPageRoute(): PageRoute {
+  if (window.location.pathname === '/gallery' || window.location.hash === '#gallery-view') return 'gallery';
+  if (window.location.pathname === '/faq' || window.location.hash === '#faq') return 'faq';
+  if (window.location.pathname === '/why-choose' || window.location.hash === '#why-choose') return 'why-choose';
+  return 'home';
+}
+
+function isStandaloneRoute() {
+  return getPageRoute() !== 'home';
+}
 
 const services = [
   { title: 'Neurology and stroke care', text: 'Evaluation and ongoing management of stroke, seizures, and neurological conditions.', icon: 'brain' },
@@ -59,7 +73,7 @@ function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
-  const isGalleryPage = window.location.pathname === '/gallery' || window.location.hash === '#gallery-view';
+  const isStandalonePage = isStandaloneRoute();
   useEffect(() => {
     let frame = 0;
     const update = () => {
@@ -67,7 +81,7 @@ function SiteHeader() {
       if (frame) return;
       frame = window.requestAnimationFrame(() => {
         frame = 0;
-        if (window.location.pathname === '/gallery' || window.location.hash === '#gallery-view') {
+        if (isStandaloneRoute()) {
           setActiveSection('');
           return;
         }
@@ -84,9 +98,9 @@ function SiteHeader() {
       window.removeEventListener('resize', update);
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [isGalleryPage]);
+  }, [isStandalonePage]);
   const closeMenu = () => setMenuOpen(false);
-  const homePrefix = isGalleryPage ? '/' : '';
+  const homePrefix = isStandalonePage ? '/' : '';
   const navLink = (section: string) => `${homePrefix}#${section}`;
   return (
     <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
@@ -101,6 +115,9 @@ function SiteHeader() {
           <a href={navLink('gallery')} aria-current={activeSection === 'gallery' ? 'location' : undefined} data-testid="link-nav-hospital" onClick={closeMenu}>Hospital</a>
           <a href={navLink('reviews')} aria-current={activeSection === 'reviews' ? 'location' : undefined} data-testid="link-nav-reviews" onClick={closeMenu}>Reviews</a>
           <a href={navLink('visit')} aria-current={activeSection === 'visit' ? 'location' : undefined} data-testid="link-nav-visit" onClick={closeMenu}>Visit us</a>
+          <a href="/faq" aria-current={getPageRoute() === 'faq' ? 'page' : undefined} data-testid="link-nav-faq" onClick={closeMenu}>FAQ</a>
+          <a href="/why-choose" aria-current={getPageRoute() === 'why-choose' ? 'page' : undefined} data-testid="link-nav-why-choose" onClick={closeMenu}>Why choose us</a>
+          <a className="nav-mobile-call" href={`tel:${phone}`} onClick={closeMenu}>Call now</a>
           <a
             className="nav-instagram-mobile"
             href="https://www.instagram.com/sri_siri_hospital/"
@@ -772,7 +789,7 @@ function Visit() {
 }
 
 function Footer() {
-  const homePrefix = window.location.pathname === '/gallery' || window.location.hash === '#gallery-view' ? '/' : '';
+  const homePrefix = isStandaloneRoute() ? '/' : '';
   return (
     <footer className="footer">
       <div className="container">
@@ -789,6 +806,7 @@ function Footer() {
               <a href={`${homePrefix}#services`} data-testid="link-footer-services">Services</a><a href={`${homePrefix}#doctors`} data-testid="link-footer-doctors">Our doctors</a>
               <a href={`${homePrefix}#gallery`} data-testid="link-footer-hospital">Hospital</a><a href={`${homePrefix}#videos`} data-testid="link-footer-videos">Health videos</a>
               <a href={`${homePrefix}#reviews`} data-testid="link-footer-reviews">Reviews</a><a href={`${homePrefix}#visit`} data-testid="link-footer-visit">Visit us</a>
+              <a href="/faq" data-testid="link-footer-faq">FAQ</a><a href="/why-choose" data-testid="link-footer-why-choose">Why choose us</a>
             </nav>
           </div>
           <div className="footer-connect-column reveal" style={{ '--footer-index': 2 } as React.CSSProperties}>
@@ -824,30 +842,52 @@ function MobileActions() {
 }
 
 function App() {
-  const [isGalleryPage, setIsGalleryPage] = useState(
-    () => window.location.pathname === '/gallery' || window.location.hash === '#gallery-view',
-  );
+  const [pageRoute, setPageRoute] = useState<PageRoute>(getPageRoute);
+  const isGalleryPage = pageRoute === 'gallery';
+  const isInfoPage = pageRoute === 'faq' || pageRoute === 'why-choose';
   useReveal(isGalleryPage);
-  useMagneticButtons(isGalleryPage);
-  usePhotoParallax(isGalleryPage);
+  useMagneticButtons(isGalleryPage || isInfoPage);
+  usePhotoParallax(isGalleryPage || isInfoPage);
   useEffect(() => {
-    const updateGalleryRoute = () => {
-      const galleryRoute = window.location.pathname === '/gallery' || window.location.hash === '#gallery-view';
-      setIsGalleryPage(galleryRoute);
-    };
-    window.addEventListener('hashchange', updateGalleryRoute);
-    window.addEventListener('popstate', updateGalleryRoute);
-    updateGalleryRoute();
+    const updateRoute = () => setPageRoute(getPageRoute());
+    window.addEventListener('hashchange', updateRoute);
+    window.addEventListener('popstate', updateRoute);
+    updateRoute();
     return () => {
-      window.removeEventListener('hashchange', updateGalleryRoute);
-      window.removeEventListener('popstate', updateGalleryRoute);
+      window.removeEventListener('hashchange', updateRoute);
+      window.removeEventListener('popstate', updateRoute);
     };
   }, []);
   useEffect(() => {
-    if (!isGalleryPage) return;
+    if (pageRoute !== 'home' || !window.location.hash.startsWith('#doctor-')) return;
+    const frame = window.requestAnimationFrame(() => {
+      const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
+      target?.scrollIntoView({ block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pageRoute]);
+  useEffect(() => {
+    const pageMetadata = {
+      home: {
+        title: 'Sri Siri Hospital',
+        description: 'Sri Siri Hospital in Tanuku, Andhra Pradesh. Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services.',
+      },
+      gallery: {
+        title: 'Sri Siri Hospital',
+        description: 'Sri Siri Hospital in Tanuku, Andhra Pradesh. Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services.',
+      },
+      faq: { title: 'Frequently asked questions · Sri Siri Hospital, Tanuku', description: 'Frequently asked questions · Sri Siri Hospital, Tanuku' },
+      'why-choose': { title: 'Why choose Sri Siri Hospital, Tanuku', description: 'Why choose Sri Siri Hospital, Tanuku' },
+    } satisfies Record<PageRoute, { title: string; description: string }>;
+    document.title = pageMetadata[pageRoute].title;
+    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (description) description.content = pageMetadata[pageRoute].description;
+  }, [pageRoute]);
+  useEffect(() => {
+    if (!isGalleryPage && !isInfoPage) return;
     const frame = window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     return () => window.cancelAnimationFrame(frame);
-  }, [isGalleryPage]);
+  }, [isGalleryPage, isInfoPage]);
   return (
     <>
       <ProgressLine />
@@ -856,6 +896,10 @@ function App() {
         <Suspense fallback={<main className="gallery-page" aria-busy="true" />}>
           <GalleryPage />
         </Suspense>
+      ) : pageRoute === 'faq' ? (
+        <FaqPage />
+      ) : pageRoute === 'why-choose' ? (
+        <WhyChoosePage />
       ) : (
         <main>
           <Hero />
