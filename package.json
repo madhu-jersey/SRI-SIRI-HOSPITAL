@@ -10,9 +10,12 @@
   },
   "private": true,
   "dependencies": {
-    "@replit/connectors-sdk": "^0.4.3"
+    "@replit/connectors-sdk": "^0.4.3",
+    "@supabase/supabase-js": "^2.57.4",
+    "nodemailer": "^7.0.10"
   },
   "devDependencies": {
+    "playwright-core": "^1.64.0",
     "prettier": "^3.9.6",
     "typescript": "~5.9.3"
   }

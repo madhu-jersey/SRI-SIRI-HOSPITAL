@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Activity, ArrowRight, Brain, Clock3,
-  HeartPulse, MapPin, Menu, MessageCircle, Stethoscope, X,
+  HeartPulse, MapPin, Menu, MessageCircle, Stethoscope, X, ChevronDown,
 } from 'lucide-react';
 import { DoctorsSection } from './components/DoctorsSection';
 import { HeroDotField } from './components/HeroDotField';
@@ -195,7 +195,35 @@ function Hero() {
         </div>
         <div className="hero-art">
           <div className="hero-photo">
-            <img src="/assets/photos/building.svg" alt="Hospital photograph placeholder: building" fetchPriority="high" />
+            <img src="/assets/hero-building.jpg" alt="Sri Sai Hospital building, Velpur Road, Tanuku" fetchPriority="high" />
+            {/* Floating service cards — percentage positions anchored to real building features */}
+            <div className="float-cards" aria-hidden="true">
+              <div className="float-card float-card--tl" style={{ top: '14%', left: '4%' }}>
+                <span className="float-card-anchor" />
+                <span className="float-card-icon"><Brain size={14} strokeWidth={1.6} /></span>
+                <span className="float-card-text"><strong>Neuro-Psychiatry</strong>Expert mental wellness care</span>
+              </div>
+              <div className="float-card float-card--ml" style={{ top: '50%', left: '4%' }}>
+                <span className="float-card-anchor" />
+                <span className="float-card-icon"><Stethoscope size={14} strokeWidth={1.6} /></span>
+                <span className="float-card-text"><strong>Internal Medicine</strong>Comprehensive adult care</span>
+              </div>
+              <div className="float-card float-card--tr" style={{ top: '10%', right: '3%' }}>
+                <span className="float-card-anchor" />
+                <span className="float-card-icon"><HeartPulse size={14} strokeWidth={1.6} /></span>
+                <span className="float-card-text"><strong>24/7 Casualty</strong>Always here for you</span>
+              </div>
+              <div className="float-card float-card--mr" style={{ top: '44%', right: '3%' }}>
+                <span className="float-card-anchor" />
+                <span className="float-card-icon"><Activity size={14} strokeWidth={1.6} /></span>
+                <span className="float-card-text"><strong>Stroke Care</strong>Advanced monitoring</span>
+              </div>
+              <div className="float-card float-card--br" style={{ bottom: '13%', right: '3%' }}>
+                <span className="float-card-anchor" />
+                <span className="float-card-icon"><Clock3 size={14} strokeWidth={1.6} /></span>
+                <span className="float-card-text"><strong>Diabetes Care</strong>Personalised management</span>
+              </div>
+            </div>
           </div>
           <div className="seal" aria-label="Sri Sai Hospital emblem"><img src="/assets/sri-sai-hospital-logo.png" alt="" /></div>
           <div className="status-card" aria-live="polite">
@@ -207,10 +235,34 @@ function Hero() {
             <div className="hours-line"><span>Mon–Sat · Evening</span><strong>5:30 PM – 8:30 PM</strong></div>
             <div className="hours-line"><span>1st &amp; 3rd Sunday</span><strong>9:30 AM – 2:00 PM</strong></div>
           </div>
+          <a className="explore-hint" href="#doctors" aria-label="Explore our hospital – scroll to doctors">
+            <ChevronDown size={14} aria-hidden="true" />
+            Explore our hospital
+          </a>
         </div>
       </div>
-      <span className="scroll-note" aria-hidden="true">Care, close to home&nbsp; ↓</span>
     </section>
+  );
+}
+
+function TrustStrip() {
+  return (
+    <div className="trust-strip" aria-label="Key facts about Sri Sai Hospital">
+      <div className="trust-item">
+        <HeartPulse size={18} strokeWidth={1.5} aria-hidden="true" />
+        <span>24/7 Casualty Services</span>
+      </div>
+      <span className="trust-sep" aria-hidden="true" />
+      <div className="trust-item">
+        <Stethoscope size={18} strokeWidth={1.5} aria-hidden="true" />
+        <span>Two Specialist Doctors</span>
+      </div>
+      <span className="trust-sep" aria-hidden="true" />
+      <div className="trust-item">
+        <Clock3 size={18} strokeWidth={1.5} aria-hidden="true" />
+        <span>Mon–Sat Outpatient Hours</span>
+      </div>
+    </div>
   );
 }
 
@@ -406,6 +458,7 @@ function App() {
       <SiteHeader />
       <main>
         <Hero />
+        <TrustStrip />
         <EmergencyStrip />
         <Services />
         <Doctors />

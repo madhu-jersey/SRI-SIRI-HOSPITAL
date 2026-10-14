@@ -1,0 +1,16 @@
+{
+  "buildCommand": "pnpm --filter @workspace/sri-sai-hospital run build",
+  "outputDirectory": "artifacts/sri-sai-hospital/dist/public",
+  "crons": [
+    {
+      "path": "/api/cleanup",
+      "schedule": "0 0 * * *"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
