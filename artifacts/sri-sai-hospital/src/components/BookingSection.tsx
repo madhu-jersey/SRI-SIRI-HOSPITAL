@@ -431,9 +431,9 @@ export function BookingSection() {
                     {errors.consent && <span className="booking-field-error" id="consent-error">{errors.consent}</span>}
                   </div>
 
-                  <div className="booking-honeypot" aria-hidden="true">
-                    <label htmlFor="bookingWebsite">Website</label>
-                    <input id="bookingWebsite" name="website" type="text" tabIndex={-1} autoComplete="off" />
+                  <div aria-hidden="true">
+                    <label htmlFor="bookingWebsite" hidden>Website</label>
+                    <input id="bookingWebsite" name="website" type="text" tabIndex={-1} autoComplete="off" className="booking-honeypot" />
                   </div>
 
                   <button className={`button button-primary booking-submit${sending ? ' is-sending' : ''}`} type="submit" disabled={sending}>

@@ -447,3 +447,13 @@ button:focus-visible, a:focus-visible, iframe:focus-visible {
   .videos .video-player.reveal { clip-path:inset(0); }
   .video-queue .video-queue-item { opacity:1;transform:none; }
 }
+
+.booking-honeypot {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
