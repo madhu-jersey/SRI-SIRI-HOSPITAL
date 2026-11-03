@@ -15,11 +15,14 @@ export async function sendAppointmentEmails(appointment) {
   const doctorMessage = doctorEmail(appointment);
   const patientMessage = patientEmail(appointment);
 
-  const results = await Promise.allSettled([
-    transporter.sendMail({ from: GMAIL_USER, to: DOCTOR_EMAIL, ...doctorMessage }),
-    transporter.sendMail({ from: GMAIL_USER, to: appointment.email, ...patientMessage }),
-  ]);
-  if (results.some((result) => result.status === 'rejected')) {
-    throw new Error('One or more appointment emails could not be sent.');
+  // The doctor must be notified first: if this fails the booking is rolled back,
+  // and the patient has not yet been told it is confirmed.
+  await transporter.sendMail({ from: GMAIL_USER, to: DOCTOR_EMAIL, ...doctorMessage });
+
+  try {
+    await transporter.sendMail({ from: GMAIL_USER, to: appointment.email, ...patientMessage });
+    return { patientEmailSent: true };
+  } catch {
+    return { patientEmailSent: false };
   }
 }

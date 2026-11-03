@@ -1,6 +1,6 @@
 import { formatSlotTime } from './appointments.mjs';
 
-const hospitalAddress = 'Back Side of Padhma sri Function Hall, 34-10-4, Somanchi Vari Street, Sajjapuram, Andhra Pradesh 534211.';
+const hospitalAddress = 'Sri Siri Hospital, DRNO.28-6-15, Sri Matha Tower, Velpur Road, Tanuku, West Godavari, Andhra Pradesh 534211.';
 
 export function doctorEmail(appointment) {
   return {

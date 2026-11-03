@@ -7,17 +7,17 @@ const videos = [
   {
     id: 'aqTzReeaaTY',
     title: 'Health advice from our doctors',
-    summary: 'A short health talk from Sri Sai Hospital. Summary to be added by the doctor.',
+    summary: 'A short health talk from Sri Siri Hospital. Summary to be added by the doctor.',
   },
   {
     id: 'g-w7LMnzEa4',
     title: 'Health advice from our doctors',
-    summary: 'A short health talk from Sri Sai Hospital. Summary to be added by the doctor.',
+    summary: 'A short health talk from Sri Siri Hospital. Summary to be added by the doctor.',
   },
   {
     id: '-HCu-2afK34',
     title: 'Health advice from our doctors',
-    summary: 'A short health talk from Sri Sai Hospital. Summary to be added by the doctor.',
+    summary: 'A short health talk from Sri Siri Hospital. Summary to be added by the doctor.',
   },
 ];
 

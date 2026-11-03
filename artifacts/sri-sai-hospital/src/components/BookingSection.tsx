@@ -71,7 +71,7 @@ function formatTime(isoString: string) {
   }).format(new Date(isoString));
 }
 
-function BookingSuccess({ date, time, onReset }: { date: string; time: string; onReset: () => void }) {
+function BookingSuccess({ date, time, emailSent, onReset }: { date: string; time: string; emailSent: boolean; onReset: () => void }) {
   return (
     <div className="booking-success" role="status" aria-live="polite">
       <div className="booking-success-mark" aria-hidden="true">
@@ -87,7 +87,11 @@ function BookingSuccess({ date, time, onReset }: { date: string; time: string; o
         <strong>{formatDate(date)}</strong>
         <span>{time}</span>
       </div>
-      <p className="booking-success-note">A confirmation email has been sent to you.</p>
+      <p className="booking-success-note">
+        {emailSent
+          ? 'A confirmation email has been sent to you.'
+          : 'We could not send your confirmation email, so please note this time. Your booking is saved.'}
+      </p>
       <button className="booking-reset" type="button" onClick={onReset}>Book another appointment</button>
     </div>
   );
@@ -111,7 +115,7 @@ export function BookingSection() {
   const [sending, setSending] = useState(false);
   const [availabilityRequest, setAvailabilityRequest] = useState(0);
   const [serverMessage, setServerMessage] = useState('');
-  const [confirmation, setConfirmation] = useState<{ date: string; time: string } | null>(null);
+  const [confirmation, setConfirmation] = useState<{ date: string; time: string; emailSent: boolean } | null>(null);
   const maxDate = useMemo(() => addDays(today, 30), [today]);
   const errors = useMemo(() => {
     const next: FieldErrors = {};
@@ -196,12 +200,12 @@ export function BookingSection() {
           website,
         }),
       });
-      let result: { message?: string; date?: string; time?: string; errors?: FieldErrors } = {};
+      let result: { message?: string; date?: string; time?: string; patientEmailSent?: boolean; errors?: FieldErrors } = {};
       if (response.status !== 204) {
         try {
           result = await response.json();
         } catch {
-          throw new Error('We could not confirm your booking. Please try again or call +91 76749 61013.');
+          throw new Error('We could not confirm your booking. Please try again or call +91 88192 24466.');
         }
       }
       if (!response.ok) {
@@ -212,6 +216,7 @@ export function BookingSection() {
       setConfirmation({
         date: result.date || fields.date,
         time: result.time || (selected ? formatTime(selected.start) : ''),
+        emailSent: result.patientEmailSent !== false,
       });
     } catch (error) {
       setServerMessage(error instanceof Error ? error.message : 'We could not confirm your booking. Please try again.');
@@ -274,7 +279,7 @@ export function BookingSection() {
 
           <div className="booking-form-panel">
             {confirmation ? (
-              <BookingSuccess date={confirmation.date} time={confirmation.time} onReset={resetForm} />
+              <BookingSuccess date={confirmation.date} time={confirmation.time} emailSent={confirmation.emailSent} onReset={resetForm} />
             ) : (
               <>
                 <div className="booking-form-heading">

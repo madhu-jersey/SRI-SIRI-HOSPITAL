@@ -8,7 +8,7 @@ import {
 import { clientIp, InMemoryRateLimiter } from './rate-limit.mjs';
 import { deleteExpiredAppointments } from './supabase.mjs';
 
-const bookingFailureMessage = 'We could not confirm your booking. Please try again or call +91 76749 61013.';
+const bookingFailureMessage = 'We could not confirm your booking. Please try again or call +91 88192 24466.';
 const slotTakenMessage = 'This slot was just booked. Please choose another time.';
 
 function reply(response, status, body) {
@@ -134,8 +134,10 @@ export function createBookingHandler({
       return serverError(response, bookingFailureMessage);
     }
 
+    let patientEmailSent = true;
     try {
-      await sendEmails(value);
+      const result = await sendEmails(value);
+      patientEmailSent = result?.patientEmailSent !== false;
     } catch {
       try {
         const { error } = await client.from('appointments').delete().eq('id', insertedId);
@@ -149,6 +151,7 @@ export function createBookingHandler({
     return reply(response, 201, {
       date: value.date,
       time: formatSlotTime(value.slot.start),
+      patientEmailSent,
       message: 'Your appointment is confirmed.',
     });
   };

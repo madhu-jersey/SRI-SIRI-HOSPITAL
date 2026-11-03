@@ -48,7 +48,7 @@ const questions = [
   {
     question: 'Is casualty open at night?',
     answer: (
-      <>Yes. Casualty services run 24 hours. For an emergency, call <a href={`tel:${phone}`}>08819-224246</a> at any time, or call <a href="tel:112">112</a>.</>
+      <>Yes. Casualty services run 24 hours. For an emergency, call <a href={`tel:${phone}`}>+91 88192 24466</a> at any time, or call <a href="tel:112">112</a>.</>
     ),
   },
   {
@@ -62,7 +62,7 @@ const questions = [
   {
     question: 'How do I book an appointment?',
     answer: (
-      <>Call <a href={`tel:${phone}`}>08819-224246</a> during clinic hours, or use the "Call to book" button next to each doctor.</>
+      <>Book with Dr. Sritha online using the <a href="/#book-appointment">appointment form</a> (evening slots, Monday to Saturday). For Dr. Jayavardhan Reddy Bijjam or other timings, call <a href={`tel:${phone}`}>+91 88192 24466</a> during clinic hours, or use the "Book with" button on each doctor's profile.</>
     ),
   },
   {
@@ -165,7 +165,7 @@ export function FaqPage() {
             );
           })}
         </div>
-        <p className="faq-contact">Still have a question? <a href={`tel:${phone}`}>Call 08819-224246.</a></p>
+        <p className="faq-contact">Still have a question? <a href={`tel:${phone}`}>Call +91 88192 24466.</a></p>
       </div>
     </main>
   );

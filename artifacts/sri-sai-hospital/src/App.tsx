@@ -860,7 +860,8 @@ function App() {
     };
   }, []);
   useEffect(() => {
-    if (pageRoute !== 'home' || !window.location.hash.startsWith('#doctor-')) return;
+    const hash = window.location.hash;
+    if (pageRoute !== 'home' || !(hash.startsWith('#doctor-') || hash === '#book-appointment')) return;
     const frame = window.requestAnimationFrame(() => {
       const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
       target?.scrollIntoView({ block: 'start' });

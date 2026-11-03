@@ -258,6 +258,22 @@ test('an email failure rolls back the inserted appointment', async () => {
   assert.equal(appointments.length, 0);
 });
 
+test('a patient email failure keeps the booking and reports it', async () => {
+  const { client, appointments } = createDatabase();
+  const handler = createBookingHandler({
+    createClient: () => client,
+    sendEmails: async () => ({ patientEmailSent: false }),
+    now: () => now,
+  });
+  const response = responseRecorder();
+
+  await handler(bookingRequest(bookingBody()), response);
+
+  assert.equal(response.statusCode, 201);
+  assert.equal(response.body.patientEmailSent, false);
+  assert.equal(appointments.length, 1);
+});
+
 test('cleanup without the exact secret returns 401', async () => {
   const { client } = createDatabase();
   const handler = createCleanupHandler({
