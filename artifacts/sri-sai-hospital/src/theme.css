@@ -278,7 +278,7 @@ a.top-bar-item:hover { color:var(--lime); }
 
 /* ---------- Footer ---------- */
 .footer { background:var(--green-deep); }
-.footer-grid { grid-template-columns:minmax(0,1.3fr) minmax(0,.8fr) minmax(0,.9fr) minmax(0,1.1fr); gap:56px; }
+.footer-grid { grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr); gap:56px; }
 .footer-brand-row { display:flex; align-items:center; gap:16px; }
 .footer-brand img { width:84px; height:84px; padding:6px; border-radius:50%; background:#fff; }
 .footer-brand h2 { margin:0; font:800 24px/1.2 'Plus Jakarta Sans',sans-serif; letter-spacing:-.03em; }
@@ -1203,3 +1203,18 @@ a.top-bar-item:hover { color:var(--lime); }
   .about-stat, .about-card-address { transform:translateY(8px); }
 }
 @keyframes theme-card-in-mobile { from { opacity:0; translate:0 14px; } to { opacity:1; translate:0 0; } }
+
+/* Video poster: thumbnail until the visitor presses play */
+.video-poster { position:absolute; inset:0; display:block; width:100%; height:100%; padding:0; border:0; background:#06362D; cursor:pointer; }
+.video-poster img { width:100%; height:100%; object-fit:cover; opacity:.92; }
+.video-poster-play { position:absolute; top:50%; left:50%; display:grid; width:68px; height:68px; place-items:center; border-radius:50%; background:var(--lime); color:var(--ink); transform:translate(-50%,-50%); box-shadow:0 14px 30px -10px rgba(0,0,0,.5); transition:transform .25s ease; }
+.video-poster-play svg { width:28px; height:28px; margin-left:3px; }
+.video-poster:hover .video-poster-play { transform:translate(-50%,-50%) scale(1.06); }
+
+/* Phones: the hero appears almost at once instead of fading in over 1.5s */
+@media (max-width:767px) and (prefers-reduced-motion:no-preference) {
+  .site-header { animation:none; }
+  .hero-pill, .hero h1 .word > span, .telugu-title, .hero-description, .hero-actions .button { animation-duration:.45s !important; animation-delay:0s !important; }
+  .hero h1 .word:last-of-type > span { animation-delay:.06s !important; }
+  .hero-doctors, .status-card { animation:theme-rise .45s ease .12s both !important; }
+}

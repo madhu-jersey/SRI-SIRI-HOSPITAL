@@ -25,6 +25,8 @@ export function VideosSection() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isSwitching, setIsSwitching] = useState(false);
   const [focusAfterSwitch, setFocusAfterSwitch] = useState<string | null>(null);
+  // The YouTube player only loads once someone chooses to play, which keeps the page light.
+  const [playingId, setPlayingId] = useState<string | null>(null);
   const playerRef = useRef<HTMLDivElement>(null);
   const queueButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const switchTimer = useRef<number | undefined>(undefined);
@@ -51,6 +53,7 @@ export function VideosSection() {
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     setIsSwitching(!prefersReducedMotion);
     setActiveIndex(nextIndex);
+    setPlayingId(videoId);
     if (switchTimer.current !== undefined) window.clearTimeout(switchTimer.current);
     switchTimer.current = window.setTimeout(() => setIsSwitching(false), prefersReducedMotion ? 0 : 300);
     playerRef.current?.scrollIntoView({
@@ -90,8 +93,8 @@ export function VideosSection() {
       <div className="container">
         <div className="video-heading-row reveal">
           <div>
-            <span className="eyebrow video-eyebrow">From our doctors</span>
-            <h2 id="videos-heading">Health, in <em>conversation.</em></h2>
+            <span className="eyebrow video-eyebrow">Videos</span>
+            <h2 id="videos-heading">Health talks by <em>our doctors</em></h2>
           </div>
           <a className="button button-ghost" href={youtubeChannel} target="_blank" rel="noreferrer" data-testid="link-visit-youtube-channel">
             Visit our channel <ArrowRight size={16} aria-hidden="true" />
@@ -107,15 +110,21 @@ export function VideosSection() {
               aria-labelledby="video-main-title"
             >
               <div className={`video-frame${isSwitching ? ' is-switching' : ''}`}>
-                <iframe
-                  key={activeVideo.id}
-                  src={`https://www.youtube-nocookie.com/embed/${activeVideo.id}?rel=0&modestbranding=1`}
-                  title={activeVideo.title}
-                  loading="eager"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                  data-testid={`frame-video-${activeVideo.id}`}
-                />
+                {playingId === activeVideo.id ? (
+                  <iframe
+                    key={activeVideo.id}
+                    src={`https://www.youtube-nocookie.com/embed/${activeVideo.id}?rel=0&modestbranding=1&autoplay=1`}
+                    title={activeVideo.title}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    data-testid={`frame-video-${activeVideo.id}`}
+                  />
+                ) : (
+                  <button className="video-poster" type="button" onClick={() => setPlayingId(activeVideo.id)} aria-label={`Play video: ${activeVideo.title}`}>
+                    <img src={`https://i.ytimg.com/vi/${activeVideo.id}/hqdefault.jpg`} alt="" loading="lazy" />
+                    <span className="video-poster-play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor" /></svg></span>
+                  </button>
+                )}
               </div>
               <div className={`video-details${isSwitching ? ' is-switching' : ''}`} aria-live="polite">
                 <span className="video-playing-status" data-testid="status-current-video">Now playing</span>

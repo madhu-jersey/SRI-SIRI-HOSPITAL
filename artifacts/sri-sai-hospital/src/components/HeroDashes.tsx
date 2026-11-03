@@ -64,8 +64,10 @@ export function HeroDashes() {
     const surface = canvas;
     const heroElement = hero;
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const finePointer = window.matchMedia('(pointer: fine)').matches;
+    // Without a mouse there is nothing for the lines to follow, so phones get a
+    // single still frame instead of a loop that would compete with scrolling.
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches || !finePointer;
     const dashes = createDashes(window.innerWidth < 768 ? 40 : 76);
 
     let width = 0;

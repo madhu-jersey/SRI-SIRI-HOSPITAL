@@ -6,7 +6,7 @@ import { DoctorsSection } from './components/DoctorsSection';
 import { BookingSection } from './components/BookingSection';
 import { VideosSection } from './components/VideosSection';
 import { FaqPage, WhyChoosePage } from './components/InfoPages';
-import { AboutSection, FaqSection, WhyChooseSection } from './components/HomeSections';
+import { AboutSection } from './components/HomeSections';
 import { HeroDashes } from './components/HeroDashes';
 import { galleryItems } from './data/gallery';
 
@@ -120,12 +120,8 @@ function SiteHeader() {
       <div className="container top-bar-inner">
         <div className="top-bar-group">
           <span className="top-bar-item"><MapPin size={16} strokeWidth={1.8} aria-hidden="true" /> Velpur Road, Tanuku</span>
-          <span className="top-bar-sep" aria-hidden="true" />
-          <a className="top-bar-item" href={directions} target="_blank" rel="noreferrer">Get directions</a>
         </div>
         <div className="top-bar-group">
-          <span className="top-bar-item top-bar-hours"><Clock3 size={16} strokeWidth={1.8} aria-hidden="true" /> 24-hour casualty</span>
-          <span className="top-bar-sep" aria-hidden="true" />
           <a className="top-bar-item" href={`tel:${phone}`} data-testid="link-top-bar-phone"><PhoneIcon /> +91 88192 24466</a>
         </div>
       </div>
@@ -142,7 +138,7 @@ function SiteHeader() {
           <a href={navLink('doctors')} aria-current={activeSection === 'doctors' ? 'location' : undefined} data-testid="link-nav-doctors" onClick={closeMenu}>Doctors</a>
           <a href={navLink('gallery')} aria-current={activeSection === 'gallery' ? 'location' : undefined} data-testid="link-nav-hospital" onClick={closeMenu}>Hospital</a>
           <a href={navLink('reviews')} aria-current={activeSection === 'reviews' ? 'location' : undefined} data-testid="link-nav-reviews" onClick={closeMenu}>Reviews</a>
-          <a href={navLink('faq-home')} aria-current={activeSection === 'faq-home' ? 'location' : undefined} data-testid="link-nav-faq" onClick={closeMenu}>FAQ</a>
+          <a href="/faq" aria-current={getPageRoute() === 'faq' ? 'page' : undefined} data-testid="link-nav-faq" onClick={closeMenu}>FAQ</a>
           <a href={navLink('visit')} aria-current={activeSection === 'visit' ? 'location' : undefined} data-testid="link-nav-visit" onClick={closeMenu}>Contact</a>
           <a className="nav-mobile-call" href={`tel:${phone}`} onClick={closeMenu}>Call now</a>
           <a
@@ -156,7 +152,6 @@ function SiteHeader() {
           </a>
         </nav>
         <div className="header-contact-actions">
-          <a className="header-phone" href={`tel:${phone}`} data-testid="link-header-phone"><PhoneIcon /> 88192 24466</a>
           <a className="nav-call" href={`tel:${phone}`} data-testid="button-call-header"><PhoneIcon /> Call now</a>
           <a className="nav-book" href={navLink('book-appointment')} data-testid="button-book-header">Book appointment</a>
           <a
@@ -401,13 +396,6 @@ function Hero() {
             <a className="button button-primary" href={`tel:${phone}`} data-testid="button-call-hero"><PhoneIcon /> Call now</a>
             <a className="button button-outline" href={directions} target="_blank" rel="noreferrer" data-testid="button-directions"><MapPin size={17} /> Get directions</a>
           </div>
-          <ul className="hero-chips" aria-label="Specialities">
-            {['Neurology', 'Diabetes', 'Internal medicine', 'Psychiatry', 'Stroke care'].map((chip) => <li key={chip}>{chip}</li>)}
-          </ul>
-          <a className="hero-stat" href={`tel:${phone}`}>
-            <strong>24/7</strong>
-            <span><b>Casualty care</b><small>Call +91 88192 24466</small></span>
-          </a>
         </div>
         <div className="hero-art">
           <div className="hero-photo-wrap">
@@ -420,10 +408,6 @@ function Hero() {
                   </div>
                 </div>
               </div>
-              <div className="seal" aria-label="Sri Siri Hospital logo"><img src="/assets/sri-siri-hospital-logo.png" alt="" /></div>
-              <a className="explore-hint" href="#doctors" aria-label="Scroll to Our doctors">
-                <ChevronDown size={14} aria-hidden="true" />
-              </a>
             </div>
 
             <a className="hero-doctors" href="#doctors">
@@ -566,15 +550,13 @@ function Services() {
     <section className="section services-section" id="services" aria-labelledby="services-heading" ref={sectionRef}>
       <div className="container">
         <div className="section-heading service-heading reveal">
-          <span className="eyebrow">Care at Sri Siri</span>
+          <span className="eyebrow">Services</span>
           <h2 id="services-heading">
-            <span className="service-word"><span>Thoughtful</span></span>{' '}
-            <span className="service-word"><span>care</span></span>{' '}
-            <span className="service-word"><span>for</span></span>{' '}
-            <em><span className="service-word"><span>every</span></span>{' '}
-            <span className="service-word"><span>day.</span></span></em>
+            <span className="service-word"><span>What</span></span>{' '}
+            <span className="service-word"><span>we</span></span>{' '}
+            <em><span className="service-word"><span>treat</span></span></em>
           </h2>
-          <p>Medical care across key needs, with a focus on careful assessment and ongoing support.</p>
+          <p>Outpatient consultations Monday to Saturday, and casualty care at any hour.</p>
         </div>
         <div className="service-grid">
           {services.map(({ title, text, icon }, index) => (
@@ -602,9 +584,9 @@ function Gallery() {
     <section className="section" id="gallery" aria-labelledby="gallery-heading">
       <div className="container">
         <div className="section-heading gallery-section-heading reveal">
-          <span className="eyebrow">A look around</span>
-          <h2 id="gallery-heading"><span className="gallery-heading-word"><span>A place for</span></span>{' '}<em><span className="gallery-heading-word"><span>care.</span></span></em></h2>
-          <p>Explore the spaces at Sri Siri Hospital.</p>
+          <span className="eyebrow">Hospital</span>
+          <h2 id="gallery-heading"><span className="gallery-heading-word"><span>Inside the</span></span>{' '}<em><span className="gallery-heading-word"><span>hospital</span></span></em></h2>
+          <p>Reception, consultation rooms, laboratory and waiting area.</p>
         </div>
         <div className="gallery-preview-grid">
           {galleryItems.map((item, index) => (
@@ -691,17 +673,14 @@ function Reviews() {
     <section className="section reviews-section" id="reviews" aria-labelledby="reviews-heading">
       <div className="container">
         <div className="section-heading review-heading reveal">
-          <span className="eyebrow">Patient experiences</span>
+          <span className="eyebrow">Google reviews</span>
           <h2 id="reviews-heading">
             <span className="review-heading-line">
-              <span className="review-word"><span>Words</span></span>{' '}
-              <span className="review-word"><span>from</span></span>{' '}
-              <span className="review-word"><span>our</span></span>
+              <span className="review-word"><span>What</span></span>{' '}
+              <span className="review-word"><span>patients</span></span>{' '}
             </span>
-            <br />
-            <em><span className="review-heading-line"><span className="review-word"><span>community.</span></span></span></em>
+            <em><span className="review-heading-line"><span className="review-word"><span>say</span></span></span></em>
           </h2>
-          <p>Experiences shared by people who have visited Sri Siri Hospital.</p>
         </div>
         <div className="review-summary reveal">
           <div className="review-summary-main">
@@ -717,7 +696,6 @@ function Reviews() {
           </div>
           <span className="review-count">31 Google reviews</span>
           <a className="button button-outline review-write" href={reviewsUrl} target="_blank" rel="noreferrer">Write a review <ExternalLink size={17} aria-hidden="true" /></a>
-          <p className="review-note">Based on Google reviews.</p>
           </div>
           <ul className="review-bars" aria-label="Google rating breakdown">
             {ratingBreakdown.map(({ stars, count }) => (
@@ -740,14 +718,12 @@ function Reviews() {
               <div className="review-by">
                 <span className="review-avatar" aria-hidden="true">{review.name.charAt(0)}</span>
                 <span data-name={review.name}>{review.name}</span>
-                <a className="review-source" href={reviewsUrl} target="_blank" rel="noreferrer">Google <ExternalLink size={14} aria-hidden="true" /></a>
               </div>
             </article>
           ))}
         </div>
         <div className="reviews-action reveal">
-          <a ref={reviewButtonRef} className="button button-outline reviews-button" href={reviewsUrl} target="_blank" rel="noreferrer" data-testid="button-more-google-reviews"><span data-label="View all Google reviews">View all Google reviews</span><ExternalLink size={17} /></a>
-          <a className="button button-primary" href="#book-appointment">Book appointment <ArrowRight size={18} aria-hidden="true" /></a>
+          <a ref={reviewButtonRef} className="button button-outline reviews-button" href={reviewsUrl} target="_blank" rel="noreferrer" data-testid="button-more-google-reviews"><span data-label="Read all 31 reviews on Google">Read all 31 reviews on Google</span><ExternalLink size={17} /></a>
         </div>
       </div>
     </section>
@@ -763,14 +739,12 @@ function Visit() {
     <section className="section section-white visit-section" id="visit" aria-labelledby="visit-heading">
       <div className="container">
         <div className="section-heading reveal">
-          <span className="eyebrow">Find us in Tanuku</span>
+          <span className="eyebrow">Contact</span>
           <h2 id="visit-heading">
-            <span className="visit-heading-word"><span>We’re</span></span>{' '}
-            <span className="visit-heading-word"><span>here</span></span>{' '}
-            <span className="visit-heading-word"><span>when</span></span>{' '}
-            <em><span className="visit-heading-word"><span>you need us.</span></span></em>
+            <span className="visit-heading-word"><span>Visit</span></span>{' '}
+            <span className="visit-heading-word"><span>the</span></span>{' '}
+            <em><span className="visit-heading-word"><span>hospital</span></span></em>
           </h2>
-          <p>Plan your visit or call the hospital for assistance.</p>
         </div>
         <div className="visit-grid">
           <div className="contact-card reveal">
@@ -813,9 +787,6 @@ function Visit() {
             data-testid="card-hospital-map"
           >
             <div className="map-shimmer" aria-hidden="true" />
-            <a className="map-directions" href={directions} target="_blank" rel="noopener noreferrer" aria-label="Go to Sri Siri Hospital location in Google Maps" data-testid="link-go-to-location">
-              <ExternalLink size={17} strokeWidth={1.8} aria-hidden="true" /> Open in Google Maps
-            </a>
             <iframe
               title="Sri Siri Hospital, Velpur Road, Tanuku"
               data-testid="frame-hospital-map"
@@ -865,6 +836,7 @@ function Footer() {
             <p className="footer-label">Explore</p>
             <nav className="footer-list" aria-label="Footer navigation">
               <a href={`${homePrefix}#about`}>About</a>
+              <a href={`${homePrefix}#services`} data-testid="link-footer-services">Services</a>
               <a href={`${homePrefix}#doctors`} data-testid="link-footer-doctors">Doctors</a>
               <a href={`${homePrefix}#gallery`} data-testid="link-footer-hospital">Hospital</a>
               <a href={`${homePrefix}#videos`} data-testid="link-footer-videos">Health videos</a>
@@ -873,20 +845,9 @@ function Footer() {
               <a href="/why-choose" data-testid="link-footer-why-choose">Why choose us</a>
             </nav>
           </div>
-          <div className="reveal" style={{ '--footer-index': 2 } as React.CSSProperties}>
-            <p className="footer-label">Services</p>
-            <nav className="footer-list" aria-label="Services">
-              {['Neurology and stroke', 'Diabetes care', 'Internal medicine', 'Psychiatry', 'Migraine and headache', '24-hour casualty'].map((item) => (
-                <a key={item} href={`${homePrefix}#services`} data-testid={item === 'Neurology and stroke' ? 'link-footer-services' : undefined}>{item}</a>
-              ))}
-            </nav>
-          </div>
-          <div className="footer-contact reveal" style={{ '--footer-index': 3 } as React.CSSProperties}>
-            <p className="footer-label">Contact</p>
+          <div className="footer-contact reveal" style={{ '--footer-index': 2 } as React.CSSProperties}>
+            <p className="footer-label">Casualty, 24 hours</p>
             <a className="footer-phone" href={`tel:${phone}`} data-testid="link-footer-call">88192 24466</a>
-            <p className="footer-hours">Mon to Sat: 9:30 AM – 2 PM, 5:30 – 8:30 PM<br />1st &amp; 3rd Sunday: 9:30 AM – 2 PM<br />Casualty: 24 hours</p>
-            <a className="footer-book" href={`${homePrefix}#book-appointment`}>Book appointment <ArrowRight size={18} aria-hidden="true" /></a>
-            <a className="footer-directions" href={directions} target="_blank" rel="noreferrer">Get directions <ExternalLink size={17} aria-hidden="true" /></a>
           </div>
         </div>
         <aside className="crisis-box" aria-label="Crisis and emergency information">
@@ -975,14 +936,12 @@ function App() {
         <main>
           <Hero />
           <AboutSection />
-          <WhyChooseSection />
           <Services />
           <Doctors />
           <BookingSection />
           <Gallery />
           <Videos />
           <Reviews />
-          <FaqSection />
           <Visit />
         </main>
       )}

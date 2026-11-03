@@ -246,9 +246,9 @@ export function BookingSection() {
     <section className="section booking-section" id="book-appointment" aria-labelledby="booking-heading">
       <div className="container">
         <div className="section-heading booking-section-heading reveal">
-          <span className="eyebrow">A little time for you</span>
+          <span className="eyebrow">Online booking</span>
           <h2 id="booking-heading">Book with <em>Dr. Sritha</em></h2>
-          <p>Choose a time that works for you. We’ll take care of the rest.</p>
+          <p>Evening appointments, Monday to Saturday. For other doctors or timings, please call.</p>
         </div>
 
         <div className="booking-card reveal">
@@ -257,7 +257,7 @@ export function BookingSection() {
               <span className="booking-avatar" aria-hidden="true">S</span>
               <span className="booking-doctor-role">Neuro-Psychiatry</span>
               <h3>Dr. Sritha</h3>
-              <p>Thoughtful care starts with a conversation. Reserve a private consultation at a time that suits you.</p>
+              <p>A private 30-minute consultation in the evening clinic.</p>
             </div>
             <div className="booking-info-row">
               <Clock3 size={19} aria-hidden="true" />

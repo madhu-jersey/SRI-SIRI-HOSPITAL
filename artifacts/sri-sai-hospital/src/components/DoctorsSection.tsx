@@ -99,8 +99,8 @@ export function DoctorsSection() {
     <section className="section section-white doctors-section" id="doctors" aria-labelledby="doctors-heading">
       <div className="container">
         <div className="section-heading reveal">
-          <span className="eyebrow">Meet your doctors</span>
-          <h2 id="doctors-heading">Meet our <em>doctors</em></h2>
+          <span className="eyebrow">Doctors</span>
+          <h2 id="doctors-heading">Our <em>doctors</em></h2>
           <p>Specialists who see patients at Sri Siri Hospital, Tanuku.</p>
         </div>
         <div className="doctor-grid">
@@ -153,26 +153,27 @@ export function DoctorsSection() {
                   ))}
                 </ul>
                 <div className="doctor-actions doctor-staged" style={{ transitionDelay: '660ms' }}>
-                  {doctorIndex === 0 && (
+                  {doctorIndex === 0 ? (
                     <a
-                      className="button button-outline"
+                      className="button button-primary"
                       href="#book-appointment"
-                      aria-label="Book an appointment with Dr. Sritha"
+                      aria-label="Book an appointment with Dr. Sritha online"
                       data-testid="button-book-appointment-sritha"
                     >
                       <CalendarDays size={17} aria-hidden="true" />
-                      Book appointment
+                      Book online
+                    </a>
+                  ) : (
+                    <a
+                      className="button button-primary"
+                      href={`tel:${phone}`}
+                      aria-label={`Call Sri Siri Hospital to book with ${doctor.bookingName}`}
+                      data-testid={`button-book-doctor-${doctorIndex + 1}`}
+                    >
+                      <PhoneCall size={17} aria-hidden="true" />
+                      Call to book
                     </a>
                   )}
-                  <a
-                    className="button button-primary"
-                    href={`tel:${phone}`}
-                    aria-label={`Call Sri Siri Hospital to book with ${doctor.bookingName}`}
-                    data-testid={`button-book-doctor-${doctorIndex + 1}`}
-                  >
-                    <PhoneCall size={17} aria-hidden="true" />
-                    Book with {doctor.bookingName}
-                  </a>
                 </div>
               </div>
             </article>
