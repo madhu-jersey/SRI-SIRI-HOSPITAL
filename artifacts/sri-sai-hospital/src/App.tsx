@@ -1,12 +1,13 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
-  ArrowRight, Camera, Clock3, HeartPulse, Instagram, MapPin, Menu, PhoneCall, Stethoscope, Youtube, X, ChevronDown,
+  ArrowRight, Camera, Clock3, ExternalLink, Instagram, MapPin, Menu, Youtube, X, ChevronDown,
 } from 'lucide-react';
 import { DoctorsSection } from './components/DoctorsSection';
 import { BookingSection } from './components/BookingSection';
-import { HeroDotField } from './components/HeroDotField';
 import { VideosSection } from './components/VideosSection';
 import { FaqPage, WhyChoosePage } from './components/InfoPages';
+import { AboutSection, FaqSection, WhyChooseSection } from './components/HomeSections';
+import { HeroDashes } from './components/HeroDashes';
 import { galleryItems } from './data/gallery';
 
 const GalleryPage = lazy(() => import('./components/GalleryPage').then((module) => ({ default: module.GalleryPage })));
@@ -43,6 +44,16 @@ const reviews = [
   { quote: 'Hospital was very clean and staff also good receiving, doctor Stitha madam was consulting to patient good and good treatment', name: 'Mana Manchili tri', age: 'a year ago' },
   { quote: 'A hospital with very good doctors, staff with lab and medical facilities. This hospital cares about Patients not money.', name: 'Supriya Reddy', age: '4 years ago' },
   { quote: 'Good hospital staff, best doctors in the city.', name: 'Sai', age: 'a year ago' },
+];
+
+// From the hospital's Google listing: all 31 reviews are 5-star.
+const reviewTotal = 31;
+const ratingBreakdown = [
+  { stars: 5, count: 31 },
+  { stars: 4, count: 0 },
+  { stars: 3, count: 0 },
+  { stars: 2, count: 0 },
+  { stars: 1, count: 0 },
 ];
 
 function getOpenState(date: Date) {
@@ -104,6 +115,21 @@ function SiteHeader() {
   const homePrefix = isStandalonePage ? '/' : '';
   const navLink = (section: string) => `${homePrefix}#${section}`;
   return (
+    <>
+    <div className="top-bar">
+      <div className="container top-bar-inner">
+        <div className="top-bar-group">
+          <span className="top-bar-item"><MapPin size={16} strokeWidth={1.8} aria-hidden="true" /> Velpur Road, Tanuku</span>
+          <span className="top-bar-sep" aria-hidden="true" />
+          <a className="top-bar-item" href={directions} target="_blank" rel="noreferrer">Get directions</a>
+        </div>
+        <div className="top-bar-group">
+          <span className="top-bar-item top-bar-hours"><Clock3 size={16} strokeWidth={1.8} aria-hidden="true" /> 24-hour casualty</span>
+          <span className="top-bar-sep" aria-hidden="true" />
+          <a className="top-bar-item" href={`tel:${phone}`} data-testid="link-top-bar-phone"><PhoneIcon /> +91 88192 24466</a>
+        </div>
+      </div>
+    </div>
     <header className={`site-header${scrolled ? ' scrolled' : ''}`}>
       <div className="container nav-inner">
         <a className="brand" href={navLink('home')} aria-label="Sri Siri Hospital home" data-testid="link-brand-home" onClick={closeMenu}>
@@ -111,13 +137,13 @@ function SiteHeader() {
           <span className="brand-name">Sri Siri Hospital<small>Tanuku, Andhra Pradesh</small></span>
         </a>
         <nav className={`nav-links${menuOpen ? ' open' : ''}`} aria-label="Main navigation">
+          <a href={navLink('about')} aria-current={activeSection === 'about' ? 'location' : undefined} data-testid="link-nav-about" onClick={closeMenu}>About</a>
           <a href={navLink('services')} aria-current={activeSection === 'services' ? 'location' : undefined} data-testid="link-nav-services" onClick={closeMenu}>Services</a>
-          <a href={navLink('doctors')} aria-current={activeSection === 'doctors' ? 'location' : undefined} data-testid="link-nav-doctors" onClick={closeMenu}>Our doctors</a>
+          <a href={navLink('doctors')} aria-current={activeSection === 'doctors' ? 'location' : undefined} data-testid="link-nav-doctors" onClick={closeMenu}>Doctors</a>
           <a href={navLink('gallery')} aria-current={activeSection === 'gallery' ? 'location' : undefined} data-testid="link-nav-hospital" onClick={closeMenu}>Hospital</a>
           <a href={navLink('reviews')} aria-current={activeSection === 'reviews' ? 'location' : undefined} data-testid="link-nav-reviews" onClick={closeMenu}>Reviews</a>
-          <a href={navLink('visit')} aria-current={activeSection === 'visit' ? 'location' : undefined} data-testid="link-nav-visit" onClick={closeMenu}>Visit us</a>
-          <a href="/faq" aria-current={getPageRoute() === 'faq' ? 'page' : undefined} data-testid="link-nav-faq" onClick={closeMenu}>FAQ</a>
-          <a href="/why-choose" aria-current={getPageRoute() === 'why-choose' ? 'page' : undefined} data-testid="link-nav-why-choose" onClick={closeMenu}>Why choose us</a>
+          <a href={navLink('faq-home')} aria-current={activeSection === 'faq-home' ? 'location' : undefined} data-testid="link-nav-faq" onClick={closeMenu}>FAQ</a>
+          <a href={navLink('visit')} aria-current={activeSection === 'visit' ? 'location' : undefined} data-testid="link-nav-visit" onClick={closeMenu}>Contact</a>
           <a className="nav-mobile-call" href={`tel:${phone}`} onClick={closeMenu}>Call now</a>
           <a
             className="nav-instagram-mobile"
@@ -130,7 +156,9 @@ function SiteHeader() {
           </a>
         </nav>
         <div className="header-contact-actions">
+          <a className="header-phone" href={`tel:${phone}`} data-testid="link-header-phone"><PhoneIcon /> 88192 24466</a>
           <a className="nav-call" href={`tel:${phone}`} data-testid="button-call-header"><PhoneIcon /> Call now</a>
+          <a className="nav-book" href={navLink('book-appointment')} data-testid="button-book-header">Book appointment</a>
           <a
             className="header-instagram"
             href="https://www.instagram.com/sri_siri_hospital/"
@@ -147,6 +175,7 @@ function SiteHeader() {
         </button>
       </div>
     </header>
+    </>
   );
 }
 
@@ -206,7 +235,7 @@ function useReveal(isGalleryPage: boolean) {
                   if (progress < 1) scoreFrame = window.requestAnimationFrame(updateScore);
                 };
                 scoreFrame = window.requestAnimationFrame(updateScore);
-              }, 1710);
+              }, 250);
             }
           }
           observer.unobserve(entry.target);
@@ -361,17 +390,24 @@ function Hero() {
   const isOpen = useClinicStatus();
   return (
     <section className="hero" id="home" aria-labelledby="hero-title">
-      <HeroDotField />
+      <HeroDashes />
       <div className="container hero-inner">
         <div className="hero-copy">
           <span className="hero-pill"><span aria-hidden="true" /> Sri Siri Hospital · Tanuku</span>
-          <h1 id="hero-title"><span className="word"><span>Sri Siri</span></span><br /><span className="word"><span>Hospital</span></span></h1>
+          <h1 id="hero-title"><span className="word"><span>Trusted care for</span></span><br /><span className="word"><span>mind and body.</span></span></h1>
           <p className="telugu-title font-telugu" lang="te" data-testid="text-hospital-name-telugu">బిజ్జం వారి శ్రీ సిరి హాస్పిటల్</p>
           <p className="hero-description">Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services in Tanuku.</p>
           <div className="hero-actions">
             <a className="button button-primary" href={`tel:${phone}`} data-testid="button-call-hero"><PhoneIcon /> Call now</a>
             <a className="button button-outline" href={directions} target="_blank" rel="noreferrer" data-testid="button-directions"><MapPin size={17} /> Get directions</a>
           </div>
+          <ul className="hero-chips" aria-label="Specialities">
+            {['Neurology', 'Diabetes', 'Internal medicine', 'Psychiatry', 'Stroke care'].map((chip) => <li key={chip}>{chip}</li>)}
+          </ul>
+          <a className="hero-stat" href={`tel:${phone}`}>
+            <strong>24/7</strong>
+            <span><b>Casualty care</b><small>Call +91 88192 24466</small></span>
+          </a>
         </div>
         <div className="hero-art">
           <div className="hero-photo-wrap">
@@ -390,6 +426,14 @@ function Hero() {
               </a>
             </div>
 
+            <a className="hero-doctors" href="#doctors">
+              <span className="hero-doctors-faces" aria-hidden="true">
+                <img src="/assets/doctor-sritha.webp" alt="" />
+                <img src="/assets/doctor-jayavardhan-reddy.webp" alt="" />
+              </span>
+              <span><b>2 specialist doctors</b><small>Neuro-psychiatry · General medicine</small></span>
+            </a>
+
             <div className="status-card" aria-live="polite">
               <div className="status-top">
                 <span className="status-label"><span className="live-dot" aria-hidden="true" /> Clinic hours</span>
@@ -403,36 +447,6 @@ function Hero() {
         </div>
       </div>
     </section>
-  );
-}
-
-function TrustStrip() {
-  return (
-    <div className="trust-strip" aria-label="Key facts about Sri Siri Hospital">
-      <div className="trust-item">
-        <HeartPulse size={18} strokeWidth={1.5} aria-hidden="true" />
-        <span>24/7 Casualty Services</span>
-      </div>
-      <span className="trust-sep" aria-hidden="true" />
-      <div className="trust-item">
-        <Stethoscope size={18} strokeWidth={1.5} aria-hidden="true" />
-        <span>Two Specialist Doctors</span>
-      </div>
-      <span className="trust-sep" aria-hidden="true" />
-      <div className="trust-item">
-        <Clock3 size={18} strokeWidth={1.5} aria-hidden="true" />
-        <span>Mon–Sat Outpatient Hours</span>
-      </div>
-    </div>
-  );
-}
-
-function EmergencyStrip() {
-  return (
-    <div className="emergency-strip" data-testid="text-emergency-contact">
-      <p>24-hour casualty and emergency care</p>
-      <a href={`tel:${phone}`} data-testid="button-call-emergency"><PhoneIcon /> +91 88192 24466</a>
-    </div>
   );
 }
 
@@ -690,6 +704,7 @@ function Reviews() {
           <p>Experiences shared by people who have visited Sri Siri Hospital.</p>
         </div>
         <div className="review-summary reveal">
+          <div className="review-summary-main">
           <div className="review-rating">
             <span className="review-score" aria-label="5.0 out of 5">5.0</span>
             <span className="review-stars" aria-label="5 stars">
@@ -700,17 +715,40 @@ function Reviews() {
               ))}
             </span>
           </div>
-          <span className="review-count">· 31 Google reviews</span>
+          <span className="review-count">31 Google reviews</span>
+          <a className="button button-outline review-write" href={reviewsUrl} target="_blank" rel="noreferrer">Write a review <ExternalLink size={17} aria-hidden="true" /></a>
+          <p className="review-note">Based on Google reviews.</p>
+          </div>
+          <ul className="review-bars" aria-label="Google rating breakdown">
+            {ratingBreakdown.map(({ stars, count }) => (
+              <li key={stars} style={{ '--bar-fill': count / reviewTotal } as React.CSSProperties}>
+                <span className="review-bar-label">{stars}<span aria-hidden="true"> ★</span></span>
+                <span className="review-bar-track" aria-hidden="true"><span /></span>
+                <span className="review-bar-count">{count}<span className="sr-only"> {stars}-star reviews</span></span>
+              </li>
+            ))}
+          </ul>
         </div>
         <div className="review-grid">
           {reviews.map((review, index) => (
             <article className="review-card reveal" key={review.name} style={{ '--review-index': index } as React.CSSProperties} data-testid={`card-review-${index + 1}`}>
+              <div className="review-card-top">
+                <span className="review-card-stars" aria-label="5 stars">{'★★★★★'}</span>
+                <time>{review.age}</time>
+              </div>
               <blockquote>“{review.quote}”</blockquote>
-              <div className="review-by"><span data-name={review.name}>{review.name}</span><time>{review.age}</time></div>
+              <div className="review-by">
+                <span className="review-avatar" aria-hidden="true">{review.name.charAt(0)}</span>
+                <span data-name={review.name}>{review.name}</span>
+                <a className="review-source" href={reviewsUrl} target="_blank" rel="noreferrer">Google <ExternalLink size={14} aria-hidden="true" /></a>
+              </div>
             </article>
           ))}
         </div>
-        <div className="reviews-action reveal"><a ref={reviewButtonRef} className="button button-outline reviews-button" href={reviewsUrl} target="_blank" rel="noreferrer" data-testid="button-more-google-reviews"><span data-label="More Google reviews">More Google reviews</span><ArrowRight size={16} /></a></div>
+        <div className="reviews-action reveal">
+          <a ref={reviewButtonRef} className="button button-outline reviews-button" href={reviewsUrl} target="_blank" rel="noreferrer" data-testid="button-more-google-reviews"><span data-label="View all Google reviews">View all Google reviews</span><ExternalLink size={17} /></a>
+          <a className="button button-primary" href="#book-appointment">Book appointment <ArrowRight size={18} aria-hidden="true" /></a>
+        </div>
       </div>
     </section>
   );
@@ -719,6 +757,8 @@ function Reviews() {
 function Visit() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapInteractive, setMapInteractive] = useState(false);
+  const isOpen = useClinicStatus();
+  const isSunday = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'short' }).format(new Date()) === 'Sun';
   return (
     <section className="section section-white visit-section" id="visit" aria-labelledby="visit-heading">
       <div className="container">
@@ -733,28 +773,39 @@ function Visit() {
           <p>Plan your visit or call the hospital for assistance.</p>
         </div>
         <div className="visit-grid">
-          <div className="visit-panel">
-            <div className="visit-block reveal" style={{ '--visit-index': 0 } as React.CSSProperties}>
-              <p className="visit-label">Address</p>
-              <p className="visit-value address">DRNO.28-6-15, Sri Matha Tower, Velpur Road, Tanuku, West Godavari, Andhra Pradesh 534211</p>
-            </div>
-            <div className="visit-block reveal" style={{ '--visit-index': 1 } as React.CSSProperties}>
-              <p className="visit-label">Call</p>
-              <div className="visit-actions">
-                <a className="button button-primary" href={`tel:${phone}`} data-testid="button-call-visit"><PhoneIcon /> +91 88192 24466</a>
+          <div className="contact-card reveal">
+            <div className="contact-card-head">
+              <div>
+                <p>Call the hospital</p>
+                <a href={`tel:${phone}`} data-testid="button-call-visit">88192 24466</a>
               </div>
+              <a className="contact-card-call" href={`tel:${phone}`} aria-label="Call Sri Siri Hospital"><PhoneIcon /></a>
             </div>
-            <div className="visit-block reveal" style={{ '--visit-index': 2 } as React.CSSProperties}>
-              <p className="visit-label">Consultation hours</p>
-              <div className="hours-table">
-                <div className="hours-row reveal" style={{ '--hours-index': 0 } as React.CSSProperties}><span>Monday–Saturday · Morning</span><span>9:30 AM – 2:00 PM</span></div>
-                <div className="hours-row reveal" style={{ '--hours-index': 1 } as React.CSSProperties}><span>Monday–Saturday · Evening</span><span>5:30 PM – 8:30 PM</span></div>
-                <div className="hours-row reveal" style={{ '--hours-index': 2 } as React.CSSProperties}><span>1st and 3rd Sunday</span><span>9:30 AM – 2:00 PM</span></div>
+            <div className="contact-card-body">
+              <div className="contact-row">
+                <span className="contact-row-icon"><MapPin size={19} strokeWidth={1.8} aria-hidden="true" /></span>
+                <div>
+                  <h3>Address</h3>
+                  <p>DRNO.28-6-15, Sri Matha Tower, Velpur Road,<br />Tanuku, West Godavari, Andhra Pradesh 534211</p>
+                </div>
               </div>
-            </div>
-            <div className="visit-block casualty-block reveal" style={{ '--visit-index': 3 } as React.CSSProperties}>
-              <p className="visit-label">Casualty</p>
-              <p className="visit-value"><span className="casualty-dot" aria-hidden="true" />24-hour casualty services</p>
+              <div className="contact-row">
+                <span className="contact-row-icon"><Clock3 size={19} strokeWidth={1.8} aria-hidden="true" /></span>
+                <div className="contact-hours">
+                  <div className="contact-hours-top">
+                    <h3>Consultation hours</h3>
+                    <span className={`contact-status${isOpen ? '' : ' closed'}`}>{isOpen ? 'Open now' : 'Closed now'}</span>
+                  </div>
+                  <div className={`contact-hours-row${isSunday ? '' : ' is-today'}`}><span>Mon to Sat · Morning{!isSunday && <em>Today</em>}</span><i /><strong>9:30 AM – 2:00 PM</strong></div>
+                  <div className={`contact-hours-row${isSunday ? '' : ' is-today'}`}><span>Mon to Sat · Evening</span><i /><strong>5:30 PM – 8:30 PM</strong></div>
+                  <div className={`contact-hours-row${isSunday ? ' is-today' : ''}`}><span>1st &amp; 3rd Sunday{isSunday && <em>Today</em>}</span><i /><strong>9:30 AM – 2:00 PM</strong></div>
+                  <div className="contact-hours-row"><span>Casualty</span><i /><strong>24 hours</strong></div>
+                </div>
+              </div>
+              <div className="contact-actions">
+                <a className="button button-primary" href="#book-appointment">Book appointment <ArrowRight size={18} aria-hidden="true" /></a>
+                <a className="button button-outline" href={directions} target="_blank" rel="noreferrer">Get directions <ExternalLink size={17} aria-hidden="true" /></a>
+              </div>
             </div>
           </div>
           <div
@@ -763,7 +814,7 @@ function Visit() {
           >
             <div className="map-shimmer" aria-hidden="true" />
             <a className="map-directions" href={directions} target="_blank" rel="noopener noreferrer" aria-label="Go to Sri Siri Hospital location in Google Maps" data-testid="link-go-to-location">
-              <MapPin size={17} strokeWidth={1.8} aria-hidden="true" /> Go to location
+              <ExternalLink size={17} strokeWidth={1.8} aria-hidden="true" /> Open in Google Maps
             </a>
             <iframe
               title="Sri Siri Hospital, Velpur Road, Tanuku"
@@ -796,29 +847,46 @@ function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-brand reveal" style={{ '--footer-index': 0 } as React.CSSProperties}>
-            <img src="/assets/sri-siri-hospital-logo.png" alt="Sri Siri Hospital logo" />
-            <h2>Sri Siri Hospital</h2>
-            <p className="font-telugu" lang="te">బిజ్జం వారి శ్రీ సిరి హాస్పిటల్</p>
-            <p className="footer-location">Tanuku, West Godavari, Andhra Pradesh</p>
+            <div className="footer-brand-row">
+              <img src="/assets/sri-siri-hospital-logo.png" alt="Sri Siri Hospital logo" />
+              <div>
+                <h2>Sri Siri Hospital</h2>
+                <p className="footer-tag">Tanuku, Andhra Pradesh</p>
+              </div>
+            </div>
+            <p className="footer-telugu font-telugu" lang="te">బిజ్జం వారి శ్రీ సిరి హాస్పిటల్</p>
+            <p className="footer-address">DRNO.28-6-15, Sri Matha Tower,<br />Velpur Road, Tanuku,<br />West Godavari, Andhra Pradesh 534211</p>
+            <div className="footer-icons">
+              <a href={youtubeChannel} target="_blank" rel="noopener noreferrer" aria-label="YouTube channel" data-testid="link-footer-youtube"><Youtube size={19} strokeWidth={1.6} aria-hidden="true" /></a>
+              <a href="https://www.instagram.com/sri_siri_hospital/" target="_blank" rel="noopener noreferrer" aria-label="Instagram: Sri Siri Hospital" data-testid="link-footer-instagram"><Instagram size={19} strokeWidth={1.6} aria-hidden="true" /></a>
+            </div>
           </div>
-          <div className="footer-explore-column reveal" style={{ '--footer-index': 1 } as React.CSSProperties}>
+          <div className="reveal" style={{ '--footer-index': 1 } as React.CSSProperties}>
             <p className="footer-label">Explore</p>
-            <nav className="footer-nav" aria-label="Footer navigation">
-              <a href={`${homePrefix}#services`} data-testid="link-footer-services">Services</a><a href={`${homePrefix}#doctors`} data-testid="link-footer-doctors">Our doctors</a>
-              <a href={`${homePrefix}#gallery`} data-testid="link-footer-hospital">Hospital</a><a href={`${homePrefix}#videos`} data-testid="link-footer-videos">Health videos</a>
-              <a href={`${homePrefix}#reviews`} data-testid="link-footer-reviews">Reviews</a><a href={`${homePrefix}#visit`} data-testid="link-footer-visit">Visit us</a>
-              <a href="/faq" data-testid="link-footer-faq">FAQ</a><a href="/why-choose" data-testid="link-footer-why-choose">Why choose us</a>
+            <nav className="footer-list" aria-label="Footer navigation">
+              <a href={`${homePrefix}#about`}>About</a>
+              <a href={`${homePrefix}#doctors`} data-testid="link-footer-doctors">Doctors</a>
+              <a href={`${homePrefix}#gallery`} data-testid="link-footer-hospital">Hospital</a>
+              <a href={`${homePrefix}#videos`} data-testid="link-footer-videos">Health videos</a>
+              <a href={`${homePrefix}#reviews`} data-testid="link-footer-reviews">Reviews</a>
+              <a href="/faq" data-testid="link-footer-faq">FAQ</a>
+              <a href="/why-choose" data-testid="link-footer-why-choose">Why choose us</a>
             </nav>
           </div>
-          <div className="footer-connect-column reveal" style={{ '--footer-index': 2 } as React.CSSProperties}>
-            <p className="footer-label">Connect</p>
-            <div className="footer-social">
-              <a href={`tel:${phone}`} data-testid="link-footer-call"><PhoneCall size={18} strokeWidth={1.6} aria-hidden="true" />Call +91 88192 24466</a>
-              <a href={youtubeChannel} target="_blank" rel="noopener noreferrer" data-testid="link-footer-youtube"><Youtube size={18} strokeWidth={1.6} aria-hidden="true" />YouTube channel</a>
-              <a href="https://www.instagram.com/sri_siri_hospital/" target="_blank" rel="noopener noreferrer" aria-label="Instagram: Sri Siri Hospital" data-testid="link-footer-instagram">
-                <Instagram size={18} strokeWidth={1.6} aria-hidden="true" />Instagram
-              </a>
-            </div>
+          <div className="reveal" style={{ '--footer-index': 2 } as React.CSSProperties}>
+            <p className="footer-label">Services</p>
+            <nav className="footer-list" aria-label="Services">
+              {['Neurology and stroke', 'Diabetes care', 'Internal medicine', 'Psychiatry', 'Migraine and headache', '24-hour casualty'].map((item) => (
+                <a key={item} href={`${homePrefix}#services`} data-testid={item === 'Neurology and stroke' ? 'link-footer-services' : undefined}>{item}</a>
+              ))}
+            </nav>
+          </div>
+          <div className="footer-contact reveal" style={{ '--footer-index': 3 } as React.CSSProperties}>
+            <p className="footer-label">Contact</p>
+            <a className="footer-phone" href={`tel:${phone}`} data-testid="link-footer-call">88192 24466</a>
+            <p className="footer-hours">Mon to Sat: 9:30 AM – 2 PM, 5:30 – 8:30 PM<br />1st &amp; 3rd Sunday: 9:30 AM – 2 PM<br />Casualty: 24 hours</p>
+            <a className="footer-book" href={`${homePrefix}#book-appointment`}>Book appointment <ArrowRight size={18} aria-hidden="true" /></a>
+            <a className="footer-directions" href={directions} target="_blank" rel="noreferrer">Get directions <ExternalLink size={17} aria-hidden="true" /></a>
           </div>
         </div>
         <aside className="crisis-box" aria-label="Crisis and emergency information">
@@ -827,7 +895,7 @@ function Footer() {
         </aside>
         <div className="footer-bottom">
           <p>Information only. This website does not replace a consultation or emergency care.</p>
-          <p>© Sri Siri Hospital · Tanuku</p>
+          <p>© {new Date().getFullYear()} Sri Siri Hospital · Tanuku, Andhra Pradesh</p>
         </div>
       </div>
     </footer>
@@ -905,14 +973,15 @@ function App() {
       ) : (
         <main>
           <Hero />
-          <TrustStrip />
-          <EmergencyStrip />
+          <AboutSection />
+          <WhyChooseSection />
           <Services />
           <Doctors />
           <BookingSection />
           <Gallery />
           <Videos />
           <Reviews />
+          <FaqSection />
           <Visit />
         </main>
       )}

@@ -245,13 +245,13 @@ export function BookingSection() {
   return (
     <section className="section booking-section" id="book-appointment" aria-labelledby="booking-heading">
       <div className="container">
-        <div className="section-heading booking-section-heading">
+        <div className="section-heading booking-section-heading reveal">
           <span className="eyebrow">A little time for you</span>
           <h2 id="booking-heading">Book with <em>Dr. Sritha</em></h2>
           <p>Choose a time that works for you. We’ll take care of the rest.</p>
         </div>
 
-        <div className="booking-card">
+        <div className="booking-card reveal">
           <aside className="booking-summary" aria-label="Appointment information">
             <div className="booking-summary-top">
               <span className="booking-avatar" aria-hidden="true">S</span>

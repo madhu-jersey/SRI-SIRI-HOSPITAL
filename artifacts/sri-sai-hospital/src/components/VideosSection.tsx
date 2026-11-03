@@ -160,6 +160,7 @@ export function VideosSection() {
                     onKeyDown={(event) => handleQueueKeyDown(event, video.id)}
                     style={{ transitionDelay: `${order * 100}ms` }}
                   >
+                    <img className="video-queue-thumb" src={`https://i.ytimg.com/vi/${video.id}/mqdefault.jpg`} alt="" loading="lazy" />
                     <span className="video-queue-title">{video.title}</span>
                     <span className="video-queue-state" data-testid={`status-video-${video.id}`}>
                       {isCurrent ? 'Now playing' : 'Play'}

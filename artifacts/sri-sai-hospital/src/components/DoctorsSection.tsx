@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
-import { CalendarDays, Check, PhoneCall } from 'lucide-react';
+import { CalendarDays, Check, PhoneCall, Stethoscope } from 'lucide-react';
 
 const doctors = [
   {
     name: 'Dr. Sritha',
     specialty: 'Neuro-Psychiatry',
     degree: 'MBBS, MD (Neuro-Psychiatry)',
+    badge: 'MD (Neuro-Psychiatry)',
     registration: 'APMC Reg. No. 85598',
     image: '/assets/doctor-sritha.webp',
     alt: 'Portrait of Dr. Sritha',
@@ -23,6 +24,7 @@ const doctors = [
     name: 'Dr. Jayavardhan Reddy Bijjam',
     specialty: 'General Medicine',
     degree: 'MBBS, MD (Physician)',
+    badge: 'MD (Physician)',
     registration: 'APMC Reg. No. 77460',
     image: '/assets/doctor-jayavardhan-reddy.webp',
     alt: 'Portrait of Dr. Jayavardhan Reddy Bijjam',
@@ -98,7 +100,7 @@ export function DoctorsSection() {
       <div className="container">
         <div className="section-heading reveal">
           <span className="eyebrow">Meet your doctors</span>
-          <h2 id="doctors-heading">Our doctors</h2>
+          <h2 id="doctors-heading">Meet our <em>doctors</em></h2>
           <p>Specialists who see patients at Sri Siri Hospital, Tanuku.</p>
         </div>
         <div className="doctor-grid">
@@ -109,15 +111,18 @@ export function DoctorsSection() {
               key={doctor.name}
               data-testid={`card-doctor-${doctorIndex + 1}`}
             >
-              <div className="doctor-image">
-                <img
-                  src={doctor.image}
-                  alt={doctor.alt}
-                  width={864}
-                  height={1244}
-                  loading="lazy"
-                  data-testid={`image-doctor-${doctorIndex + 1}`}
-                />
+              <div className="doctor-photo">
+                <div className="doctor-image">
+                  <img
+                    src={doctor.image}
+                    alt={doctor.alt}
+                    width={864}
+                    height={1244}
+                    loading="lazy"
+                    data-testid={`image-doctor-${doctorIndex + 1}`}
+                  />
+                </div>
+                <span className="doctor-badge"><span><Stethoscope size={17} aria-hidden="true" /></span>{doctor.badge}</span>
               </div>
               <div className="doctor-info">
                 <span className="doctor-specialty doctor-staged" style={{ transitionDelay: '0ms' }} data-testid={`text-doctor-specialty-${doctorIndex + 1}`}>
@@ -129,10 +134,10 @@ export function DoctorsSection() {
                 <p className="doctor-degree doctor-staged" style={{ transitionDelay: '120ms' }} data-testid={`text-doctor-degree-${doctorIndex + 1}`}>
                   {doctor.degree}
                 </p>
+                <blockquote className="doctor-quote doctor-staged" style={{ transitionDelay: '150ms' }}>{doctor.caption}</blockquote>
                 <p className="doctor-reg doctor-staged" style={{ transitionDelay: '180ms' }} data-testid={`text-doctor-registration-${doctorIndex + 1}`}>
                   {doctor.registration}
                 </p>
-                <hr className="doctor-divider doctor-staged" style={{ transitionDelay: '240ms' }} />
                 <p className="doctor-focus-heading doctor-staged" style={{ transitionDelay: '300ms' }}>Areas of care</p>
                 <ul className="focus-list">
                   {doctor.areas.map((area, areaIndex) => (
@@ -147,10 +152,6 @@ export function DoctorsSection() {
                     </li>
                   ))}
                 </ul>
-                <div className="doctor-caption doctor-staged" style={{ transitionDelay: '600ms' }}>
-                  <h4>What patients can expect</h4>
-                  <p>{doctor.caption}</p>
-                </div>
                 <div className="doctor-actions doctor-staged" style={{ transitionDelay: '660ms' }}>
                   {doctorIndex === 0 && (
                     <a

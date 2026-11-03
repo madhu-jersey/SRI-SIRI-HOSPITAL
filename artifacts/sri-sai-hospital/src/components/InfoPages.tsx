@@ -5,7 +5,7 @@ import {
 
 const phone = '+918819224466';
 
-const reasons = [
+export const reasons = [
   {
     title: 'Internal medicine and diabetes care',
     text: 'Structured care for diabetes, thyroid disorders, and general medical illness.',
@@ -38,7 +38,7 @@ const reasons = [
   },
 ];
 
-const questions = [
+export const questions = [
   {
     question: 'What are your clinic hours?',
     answer: (
