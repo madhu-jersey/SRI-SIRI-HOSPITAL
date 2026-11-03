@@ -906,6 +906,7 @@ function MobileActions() {
   return (
     <div className="mobile-actions" aria-label="Quick contact">
       <a className="call" href={`tel:${phone}`} data-testid="button-call-mobile"><PhoneIcon /> Call</a>
+      <a className="book" href={`${isStandaloneRoute() ? '/' : ''}#book-appointment`} data-testid="button-book-mobile">Book appointment <ArrowRight size={16} aria-hidden="true" /></a>
     </div>
   );
 }
