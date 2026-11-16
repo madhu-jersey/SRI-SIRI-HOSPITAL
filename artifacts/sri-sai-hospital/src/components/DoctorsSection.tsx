@@ -156,12 +156,12 @@ export function DoctorsSection() {
                   {doctorIndex === 0 ? (
                     <a
                       className="button button-primary"
-                      href="#book-appointment"
-                      aria-label="Book an appointment with Dr. Sritha online"
+                      href="/consult"
+                      aria-label="Book a video consultation with Dr. Sritha"
                       data-testid="button-book-appointment-sritha"
                     >
                       <CalendarDays size={17} aria-hidden="true" />
-                      Book online
+                      Book video consult
                     </a>
                   ) : (
                     <a

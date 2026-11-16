@@ -12,8 +12,7 @@
   "packageManager": "pnpm@10.28.0",
   "dependencies": {
     "@replit/connectors-sdk": "^0.4.3",
-    "@supabase/supabase-js": "^2.57.4",
-    "nodemailer": "^7.0.10"
+    "@supabase/supabase-js": "2.117.3"
   },
   "devDependencies": {
     "playwright-core": "^1.64.0",

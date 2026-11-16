@@ -1,7 +1,7 @@
 import path from 'path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
@@ -15,9 +15,37 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH || '/';
 
+// .env.local lives at the repository root, next to vercel.json.
+const envDir = path.resolve(import.meta.dirname, '..', '..');
+
+// Runs the /api/app router inside the dev server, so `pnpm dev` works without
+// the Vercel CLI. Without Supabase settings it uses the in-memory demo store.
+function devApi(): Plugin {
+  return {
+    name: 'sri-siri-dev-api',
+    apply: 'serve',
+    configureServer(server) {
+      const env = loadEnv(server.config.mode, envDir, '');
+      for (const [key, value] of Object.entries(env)) process.env[key] ??= value;
+      server.middlewares.use('/api/app', async (request, response) => {
+        try {
+          const module = await server.ssrLoadModule('/api/app.mjs');
+          await module.default(request, response);
+        } catch (error) {
+          server.config.logger.error(String((error as Error).stack ?? error));
+          response.statusCode = 500;
+          response.end(JSON.stringify({ error: 'Dev API crashed. See the terminal.' }));
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
+  envDir,
   plugins: [
+    devApi(),
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),

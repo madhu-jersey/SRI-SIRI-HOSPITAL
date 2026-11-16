@@ -62,7 +62,7 @@ export const questions = [
   {
     question: 'How do I book an appointment?',
     answer: (
-      <>Book with Dr. Sritha online using the <a href="/#book-appointment">appointment form</a> (evening slots, Monday to Saturday). For Dr. Jayavardhan Reddy Bijjam or other timings, call <a href={`tel:${phone}`}>+91 88192 24466</a> during clinic hours, or use the "Book with" button on each doctor's profile.</>
+      <>Book a video consultation with Dr. Sritha on the <a href="/consult">online consultation page</a> (evening slots, Monday to Saturday): pick a time and send the request on WhatsApp. For Dr. Jayavardhan Reddy Bijjam or other timings, call <a href={`tel:${phone}`}>+91 88192 24466</a> during clinic hours, or use the "Book with" button on each doctor's profile.</>
     ),
   },
   {

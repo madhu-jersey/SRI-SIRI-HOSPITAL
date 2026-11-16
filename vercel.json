@@ -3,13 +3,17 @@
   "outputDirectory": "artifacts/sri-sai-hospital/dist/public",
   "crons": [
     {
-      "path": "/api/cleanup",
+      "path": "/api/app/cron/cleanup",
       "schedule": "0 0 * * *"
     }
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/app/(.*)",
+      "destination": "/api/app?route=$1"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

@@ -3,7 +3,6 @@ import {
   ArrowRight, Camera, Clock3, ExternalLink, Instagram, MapPin, Menu, Youtube, X, ChevronDown,
 } from 'lucide-react';
 import { DoctorsSection } from './components/DoctorsSection';
-import { BookingSection } from './components/BookingSection';
 import { VideosSection } from './components/VideosSection';
 import { FaqPage, WhyChoosePage } from './components/InfoPages';
 import { AboutSection } from './components/HomeSections';
@@ -11,15 +10,26 @@ import { HeroDashes } from './components/HeroDashes';
 import { galleryItems } from './data/gallery';
 
 const GalleryPage = lazy(() => import('./components/GalleryPage').then((module) => ({ default: module.GalleryPage })));
+const ConsultPage = lazy(() => import('./consult/PatientPages').then((module) => ({ default: module.ConsultPage })));
+const TrackPage = lazy(() => import('./consult/PatientPages').then((module) => ({ default: module.TrackPage })));
+const FeedbackPage = lazy(() => import('./consult/PatientPages').then((module) => ({ default: module.FeedbackPage })));
+const Dashboard = lazy(() => import('./dashboard/Dashboard'));
 
 const phone = '+918819224466';
 const directions = 'https://www.google.com/maps/dir/?api=1&destination=16.7536433,81.6862207';
 const reviewsUrl = 'https://www.google.com/maps/place/Sri+Siri+hospital/@16.7536484,81.6836458,840m/data=!3m1!1e3!4m18!1m9!3m8!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!2sSri+Siri+hospital!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn!3m7!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn?entry=ttu';
 const youtubeChannel = 'https://www.youtube.com/channel/UCoZrqTftw_z7tXwagHrw2oA';
 
-type PageRoute = 'home' | 'gallery' | 'faq' | 'why-choose';
+type PageRoute = 'home' | 'gallery' | 'faq' | 'why-choose' | 'consult' | 'track' | 'feedback' | 'dashboard';
+
+const CONSULT_ROUTES: PageRoute[] = ['consult', 'track', 'feedback'];
 
 function getPageRoute(): PageRoute {
+  const path = window.location.pathname.replace(/\/+$/, '');
+  if (path === '/consult') return 'consult';
+  if (path.startsWith('/a/')) return 'track';
+  if (path.startsWith('/f/')) return 'feedback';
+  if (path === '/dashboard') return 'dashboard';
   if (window.location.pathname === '/gallery' || window.location.hash === '#gallery-view') return 'gallery';
   if (window.location.pathname === '/faq' || window.location.hash === '#faq') return 'faq';
   if (window.location.pathname === '/why-choose' || window.location.hash === '#why-choose') return 'why-choose';
@@ -153,7 +163,7 @@ function SiteHeader() {
         </nav>
         <div className="header-contact-actions">
           <a className="nav-call" href={`tel:${phone}`} data-testid="button-call-header"><PhoneIcon /> Call now</a>
-          <a className="nav-book" href={navLink('book-appointment')} data-testid="button-book-header">Book appointment</a>
+          <a className="nav-book" href="/consult" data-testid="button-book-header">Book consultation</a>
           <a
             className="header-instagram"
             href="https://www.instagram.com/sri_siri_hospital/"
@@ -777,7 +787,7 @@ function Visit() {
                 </div>
               </div>
               <div className="contact-actions">
-                <a className="button button-primary" href="#book-appointment">Book appointment <ArrowRight size={18} aria-hidden="true" /></a>
+                <a className="button button-primary" href="/consult">Book consultation <ArrowRight size={18} aria-hidden="true" /></a>
                 <a className="button button-outline" href={directions} target="_blank" rel="noreferrer">Get directions <ExternalLink size={17} aria-hidden="true" /></a>
               </div>
             </div>
@@ -867,7 +877,7 @@ function MobileActions() {
   return (
     <div className="mobile-actions" aria-label="Quick contact">
       <a className="call" href={`tel:${phone}`} data-testid="button-call-mobile"><PhoneIcon /> Call</a>
-      <a className="book" href={`${isStandaloneRoute() ? '/' : ''}#book-appointment`} data-testid="button-book-mobile">Book appointment <ArrowRight size={16} aria-hidden="true" /></a>
+      <a className="book" href="/consult" data-testid="button-book-mobile">Book consultation <ArrowRight size={16} aria-hidden="true" /></a>
     </div>
   );
 }
@@ -875,10 +885,20 @@ function MobileActions() {
 function App() {
   const [pageRoute, setPageRoute] = useState<PageRoute>(getPageRoute);
   const isGalleryPage = pageRoute === 'gallery';
-  const isInfoPage = pageRoute === 'faq' || pageRoute === 'why-choose';
+  const isInfoPage = pageRoute === 'faq' || pageRoute === 'why-choose' || CONSULT_ROUTES.includes(pageRoute);
+  const isConsultPage = CONSULT_ROUTES.includes(pageRoute);
   useReveal(isGalleryPage);
   useMagneticButtons(isGalleryPage || isInfoPage);
   usePhotoParallax(isGalleryPage || isInfoPage);
+  useEffect(() => {
+    // Old links to the removed booking form go to the consultation page.
+    const redirectOldBooking = () => {
+      if (window.location.hash === '#book-appointment') window.location.replace('/consult');
+    };
+    redirectOldBooking();
+    window.addEventListener('hashchange', redirectOldBooking);
+    return () => window.removeEventListener('hashchange', redirectOldBooking);
+  }, []);
   useEffect(() => {
     const updateRoute = () => setPageRoute(getPageRoute());
     window.addEventListener('hashchange', updateRoute);
@@ -891,7 +911,7 @@ function App() {
   }, []);
   useEffect(() => {
     const hash = window.location.hash;
-    if (pageRoute !== 'home' || !(hash.startsWith('#doctor-') || hash === '#book-appointment')) return;
+    if (pageRoute !== 'home' || !hash.startsWith('#doctor-')) return;
     const frame = window.requestAnimationFrame(() => {
       const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
       target?.scrollIntoView({ block: 'start' });
@@ -910,21 +930,47 @@ function App() {
       },
       faq: { title: 'Frequently asked questions · Sri Siri Hospital, Tanuku', description: 'Frequently asked questions · Sri Siri Hospital, Tanuku' },
       'why-choose': { title: 'Why choose Sri Siri Hospital, Tanuku', description: 'Why choose Sri Siri Hospital, Tanuku' },
+      consult: { title: 'Video consultation with Dr. Sritha · Sri Siri Hospital', description: 'Book a Zoom video consultation with Dr. Sritha at Sri Siri Hospital, Tanuku. Pick a time and send your request on WhatsApp.' },
+      track: { title: 'Your appointment · Sri Siri Hospital', description: 'Your video consultation with Sri Siri Hospital.' },
+      feedback: { title: 'Feedback · Sri Siri Hospital', description: 'Tell us how your consultation went.' },
+      dashboard: { title: 'Consultations dashboard · Sri Siri Hospital', description: 'Staff dashboard.' },
     } satisfies Record<PageRoute, { title: string; description: string }>;
     document.title = pageMetadata[pageRoute].title;
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (description) description.content = pageMetadata[pageRoute].description;
+    // Private pages (patient links and the staff dashboard) stay out of search results.
+    let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
+    if (['track', 'feedback', 'dashboard'].includes(pageRoute)) {
+      if (!robots) {
+        robots = document.createElement('meta');
+        robots.name = 'robots';
+        document.head.appendChild(robots);
+      }
+      robots.content = 'noindex, nofollow';
+    }
   }, [pageRoute]);
   useEffect(() => {
     if (!isGalleryPage && !isInfoPage) return;
     const frame = window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }));
     return () => window.cancelAnimationFrame(frame);
   }, [isGalleryPage, isInfoPage]);
+  if (pageRoute === 'dashboard') {
+    return (
+      <Suspense fallback={<main className="dash-loading" aria-busy="true" />}>
+        <Dashboard />
+      </Suspense>
+    );
+  }
+  const token = decodeURIComponent(window.location.pathname.split('/')[2] ?? '');
   return (
     <>
       <ProgressLine />
       <SiteHeader />
-      {isGalleryPage ? (
+      {isConsultPage ? (
+        <Suspense fallback={<main className="consult-page" aria-busy="true" />}>
+          {pageRoute === 'consult' ? <ConsultPage /> : pageRoute === 'track' ? <TrackPage token={token} /> : <FeedbackPage token={token} />}
+        </Suspense>
+      ) : isGalleryPage ? (
         <Suspense fallback={<main className="gallery-page" aria-busy="true" />}>
           <GalleryPage />
         </Suspense>
@@ -938,7 +984,6 @@ function App() {
           <AboutSection />
           <Services />
           <Doctors />
-          <BookingSection />
           <Gallery />
           <Videos />
           <Reviews />
@@ -946,7 +991,7 @@ function App() {
         </main>
       )}
       <Footer />
-      {!isGalleryPage && <MobileActions />}
+      {!isGalleryPage && !isConsultPage && <MobileActions />}
     </>
   );
 }
