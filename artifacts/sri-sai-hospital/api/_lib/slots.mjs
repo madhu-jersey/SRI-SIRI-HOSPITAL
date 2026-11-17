@@ -1,9 +1,10 @@
-// Turns weekly working hours into bookable slots for the next 14 days.
+// Turns weekly working hours into bookable slots. Patients can book from
+// today up to 7 days (today and the next six).
 // India has no daylight saving, so IST is always UTC+5:30.
 
 const IST_OFFSET_MINUTES = 330;
 const MINUTE = 60_000;
-export const BOOKING_DAYS = 14;
+export const BOOKING_DAYS = 7;
 export const LEAD_MINUTES = 30;
 
 function istDateParts(time) {
@@ -57,4 +58,57 @@ export function findSlot(days, startIso) {
     if (slot) return slot;
   }
   return null;
+}
+
+// "2026-11-30" -> UTC time of midnight in India on that day.
+export function istMidnightOf(dateKey) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return istMidnightUtc({ year, month: month - 1, day });
+}
+
+export function istDateKey(time) {
+  const { year, month, day } = istDateParts(time);
+  return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+// The doctor's calendar: every clinic slot for each day, marked as free,
+// booked, blocked (time off) or past, plus bookings and time off on that day.
+export function calendarDays(rules, consultations, timeOff, fromKey, days, now = Date.now()) {
+  const active = consultations.filter((item) => item.status === 'requested' || item.status === 'scheduled');
+  const result = [];
+  const start = istMidnightOf(fromKey);
+  for (let offset = 0; offset < days; offset += 1) {
+    const midnight = start + offset * 24 * 60 * MINUTE;
+    const next = midnight + 24 * 60 * MINUTE;
+    const date = istDateKey(midnight + 12 * 60 * MINUTE);
+    const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
+    const dayRules = rules.filter((rule) => rule.weekday === weekday);
+    const overlapping = (list, from, to) => list.filter((item) => Date.parse(item.starts_at) < to && from < Date.parse(item.ends_at));
+    const slots = [];
+    for (const rule of dayRules) {
+      for (let minute = rule.start_minute; minute + rule.slot_minutes <= rule.end_minute; minute += rule.slot_minutes) {
+        const from = midnight + minute * MINUTE;
+        const to = from + rule.slot_minutes * MINUTE;
+        const booking = overlapping(active, from, to)[0];
+        const block = overlapping(timeOff, from, to)[0];
+        slots.push({
+          start: new Date(from).toISOString(),
+          end: new Date(to).toISOString(),
+          state: booking ? 'booked' : block ? 'blocked' : from < now ? 'past' : 'free',
+          ...(booking ? { consultationId: booking.id } : {}),
+          ...(block ? { timeOffId: block.id } : {}),
+        });
+      }
+    }
+    slots.sort((a, b) => a.start.localeCompare(b.start));
+    result.push({
+      date,
+      weekday,
+      open: dayRules.length > 0,
+      slots,
+      consultationIds: overlapping(consultations, midnight, next).map((item) => item.id),
+      timeOffIds: overlapping(timeOff, midnight, next).map((item) => item.id),
+    });
+  }
+  return result;
 }

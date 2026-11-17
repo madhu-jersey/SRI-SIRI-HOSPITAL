@@ -39,6 +39,8 @@ export type PublicConfig = {
   hospitalWhatsappDisplay: string;
   holdMinutes: number;
   auth: 'demo' | 'supabase';
+  bookingDays: number;
+  hours: Array<{ weekday: number; start_minute: number; end_minute: number }>;
   doctor: { name: string; qualification: string; registration: string; minutes: number };
 };
 

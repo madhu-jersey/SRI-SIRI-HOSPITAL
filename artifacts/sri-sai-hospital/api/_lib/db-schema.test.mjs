@@ -2,15 +2,15 @@
 // the guarantees the app relies on.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import { btree_gist } from '@electric-sql/pglite/contrib/btree_gist';
 
-const migration = readFileSync(
-  fileURLToPath(new URL('../../../../supabase/migrations/20261116000100_whatsapp_consultations.sql', import.meta.url)),
-  'utf8',
-);
+// Every migration, in order, as Supabase runs them.
+const migrationsDir = fileURLToPath(new URL('../../../../supabase/migrations/', import.meta.url));
+const migration = readdirSync(migrationsDir).filter((name) => name.endsWith('.sql')).sort()
+  .map((name) => readFileSync(migrationsDir + name, 'utf8')).join('\n');
 
 async function freshDatabase(before = '') {
   const db = new PGlite({ extensions: { btree_gist } });
@@ -133,4 +133,19 @@ test('the old booking table is moved aside and past bookings are removed', async
   await db.query(`update legacy_booking_appointments set expires_at = now() - interval '1 minute'`);
   const { rows: [swept] } = await db.query(`select sweep_legacy_bookings() as n`);
   assert.equal(swept.n, 1);
+});
+
+test('clinic hours can be replaced in one step', async () => {
+  const { db, doctorId } = await freshDatabase();
+  const rules = [{ weekday: 1, start_minute: 600, end_minute: 720, slot_minutes: 20 }, { weekday: 3, start_minute: 1050, end_minute: 1230, slot_minutes: 30 }];
+  const { rows: [result] } = await db.query('select replace_availability($1, $2::jsonb) as count', [doctorId, JSON.stringify(rules)]);
+  assert.equal(result.count, 2);
+  const { rows } = await db.query('select weekday, slot_minutes from availability_rules order by weekday');
+  assert.deepEqual(rows, [{ weekday: 1, slot_minutes: 20 }, { weekday: 3, slot_minutes: 30 }]);
+});
+
+test('time off needs an end after its start', async () => {
+  const { db, doctorId } = await freshDatabase();
+  await db.query(`insert into time_off (doctor_id, starts_at, ends_at, reason) values ($1, '2026-12-01T00:00Z', '2026-12-02T00:00Z', 'Leave')`, [doctorId]);
+  await assert.rejects(db.query(`insert into time_off (doctor_id, starts_at, ends_at) values ($1, '2026-12-02T00:00Z', '2026-12-01T00:00Z')`, [doctorId]));
 });

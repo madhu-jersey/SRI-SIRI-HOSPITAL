@@ -16,6 +16,25 @@ type Errors = Partial<Record<'name' | 'phone' | 'confirmPhone' | 'consent' | 'sl
 
 const PERIOD_LABELS = { morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' } as const;
 
+// "Monday – Saturday" and "5:30 PM – 8:30 PM" from the doctor's weekly hours.
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+function hoursSummary(hours: PublicConfig['hours']) {
+  const clock = (minutes: number) => formatTime(`2026-01-05T${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00+05:30`);
+  const order = [1, 2, 3, 4, 5, 6, 0].filter((day) => hours.some((rule) => rule.weekday === day));
+  if (!order.length) return { days: 'Bookings are paused', times: 'Please call the hospital' };
+  const runs: number[][] = [];
+  for (const day of order) {
+    const last = runs.at(-1);
+    const position = [1, 2, 3, 4, 5, 6, 0].indexOf(day);
+    if (last && [1, 2, 3, 4, 5, 6, 0].indexOf(last.at(-1)!) === position - 1) last.push(day);
+    else runs.push([day]);
+  }
+  const days = runs.map((run) => (run.length > 2 ? `${DAY_NAMES[run[0]]} – ${DAY_NAMES[run.at(-1)!]}` : run.map((day) => DAY_NAMES[day]).join(', '))).join(', ');
+  const sessions = [...new Set(hours.map((rule) => `${rule.start_minute}-${rule.end_minute}`))].map((key) => key.split('-').map(Number)).sort((a, b) => a[0] - b[0]);
+  const times = sessions.length > 2 ? 'Times vary by day' : sessions.map(([start, end]) => `${clock(start)} – ${clock(end)}`).join(' and ');
+  return { days, times };
+}
+
 function dayLabel(date: string) {
   const value = new Date(`${date}T12:00:00Z`);
   const part = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', ...options }).format(value);
@@ -220,7 +239,7 @@ export function ConsultPage() {
             </div>
             <div className="booking-info-row">
               <Clock3 size={19} aria-hidden="true" />
-              <div><strong>Monday – Saturday</strong><span>5:30 PM – 8:30 PM, India time</span></div>
+              <div><strong>{config ? hoursSummary(config.hours).days : 'Monday – Saturday'}</strong><span>{config ? `${hoursSummary(config.hours).times}, India time · book up to ${config.bookingDays} days ahead` : '5:30 PM – 8:30 PM, India time'}</span></div>
             </div>
             <div className="booking-info-row">
               <MessageCircle size={19} aria-hidden="true" />
@@ -472,7 +491,7 @@ export function TrackPage({ token }: { token: string }) {
                 {data.passcode && <p className="consult-passcode">Meeting passcode: <strong>{data.passcode}</strong></p>}
               </div>
             )}
-            {data.status === 'rejected' && (
+            {(data.status === 'rejected' || data.status === 'cancelled') && (
               <div className="consult-track-note">
                 {data.rejectReason && <p>Reason: {data.rejectReason}</p>}
                 <a className="button button-primary" href="/consult">Choose another time <ArrowRight size={17} aria-hidden="true" /></a>

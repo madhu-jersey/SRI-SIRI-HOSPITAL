@@ -52,10 +52,11 @@ describe('public booking', () => {
     assert.equal(body.holdMinutes, 5);
   });
 
-  test('slots: 14 days, Mon-Sat 5:30-8:30 PM IST, nothing on Sunday', async () => {
+  test('slots: only the next 7 days, Mon-Sat 5:30-8:30 PM IST, nothing on Sunday', async () => {
     const { call } = await setup();
     const { body } = await call('GET', 'slots');
-    assert.equal(body.days.length, 14);
+    assert.equal(body.days.length, 7);
+    assert.equal(body.days[6].date, '2026-11-22');
     const monday = body.days[0];
     assert.equal(monday.date, '2026-11-16');
     assert.equal(monday.slots.length, 6);

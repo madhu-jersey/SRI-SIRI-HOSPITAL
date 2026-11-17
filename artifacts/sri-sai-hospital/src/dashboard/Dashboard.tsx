@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BellRing, Check, CircleAlert, History, LoaderCircle, LogOut, RefreshCw, Settings, Star, Video, Volume2, VolumeX, X,
+  BellRing, CalendarClock, CalendarDays, CalendarRange, CalendarX2, Check, ChevronRight, CircleAlert, History, Inbox, LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Printer, RefreshCw, Search, Settings, Star, UserPlus, Video, Volume2, VolumeX, X,
 } from 'lucide-react';
 import {
   DEFAULT_TEMPLATES, TEMPLATE_FIELDS, TEMPLATE_KEYS, type TemplateKey, type Templates, formatDate, formatIndianPhone, formatTime, renderTemplate,
@@ -10,17 +10,12 @@ import { ApiError, api, type PublicConfig } from '../consult/api';
 import { type AuthMode, currentToken, signIn, signOut, staffApi, subscribeToChanges, supabaseConfigured } from './session';
 import { playSound, soundLocked, unlockSound } from './sound';
 import './dashboard.css';
+import './calendar.css';
+import { type Consultation, type Message, MessagePreview, Modal, SendDialog, WhatsAppGlyph } from './ui';
+import {
+  type ActionResult, type Rule, type TimeOffDraft, AffectedDialog, BookingWeek, CalendarView, CancelDialog, ClinicHoursDialog, NewBookingDialog, RescheduleDialog, TimeOffDialog,
+} from './CalendarView';
 
-type Message = { delivery: 'link'; url: string; text: string } | { delivery: 'sent'; text: string; providerMessageId?: string };
-type Consultation = {
-  id: string; ref_code: string; patient_name: string; patient_phone: string; patient_phone_display: string;
-  starts_at: string; ends_at: string; status: string; status_label: string; reject_reason: string | null;
-  meeting: { provider: string; join_url: string; passcode: string | null } | null;
-  accepted_at: string | null; confirmation_sent_at: string | null; link_reminder_sent_at: string | null; feedback_request_sent_at: string | null;
-  created_at: string; tracker_url: string;
-  feedback: { rating: number; comment: string; allow_public: boolean } | null;
-  messages: Partial<Record<'confirmation' | 'link_reminder' | 'feedback' | 'rejection', Message>>;
-};
 type SettingsData = { hospitalWhatsapp: string; hospitalWhatsappDisplay: string; templates: Templates };
 type DashboardData = { now: string; doctor: { name: string }; zoomMode: 'mock' | 'live'; messagingMode: string; consultations: Consultation[]; settings: SettingsData };
 type Toast = { id: number; text: string; tone: 'info' | 'error' };
@@ -57,7 +52,7 @@ export default function Dashboard() {
       .catch((reason: Error) => setError(reason.message));
   }, []);
 
-  if (error) return <main className="dash-center"><div className="dash-login"><p className="dash-error">{error}</p></div></main>;
+  if (error) return <main className="dash-center"><div className="dash-panel dash-center-card"><p className="dash-error">{error}</p></div></main>;
   if (!config || signedIn === null) return <main className="dash-center" aria-busy="true"><LoaderCircle className="dash-spin" size={28} aria-label="Loading" /></main>;
   if (!signedIn) return <Login mode={config.auth} onSignedIn={() => setSignedIn(true)} />;
   return <DashboardApp mode={config.auth} onSignedOut={() => setSignedIn(false)} />;
@@ -86,23 +81,45 @@ function Login({ mode, onSignedIn }: { mode: AuthMode; onSignedIn: () => void })
   }
 
   return (
-    <main className="dash-center">
-      <form className="dash-login" onSubmit={submit}>
-        <span className="dash-brand">Sri Siri Hospital</span>
-        <h1>Consultations</h1>
-        <p>Sign in to see requests and reminders.</p>
-        {mode === 'demo' && <p className="dash-demo-note">Local demo: the password is <code>demo</code> unless DEMO_PASSWORD is set. Data resets when the dev server restarts.</p>}
-        {unavailable && <p className="dash-error">Sign-in is not set up yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.</p>}
-        <label htmlFor="dash-email">Email</label>
-        <input id="dash-email" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required />
-        <label htmlFor="dash-password">Password</label>
-        <input id="dash-password" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
-        {error && <p className="dash-error" role="alert">{error}</p>}
-        <button className="dash-button dash-primary" type="submit" disabled={busy || unavailable}>
-          {busy ? <LoaderCircle className="dash-spin" size={18} aria-hidden="true" /> : null} Sign in
-        </button>
-      </form>
+    <main className="dash-auth">
+      <section className="dash-auth-brand" aria-hidden="true">
+        <div className="dash-auth-brand-inner">
+          <Brand light />
+          <div>
+            <p className="dash-auth-kicker">Staff portal</p>
+            <h2>Video consultations</h2>
+            <p>Requests, Zoom meetings and WhatsApp reminders for Dr. Sritha’s evening clinic.</p>
+          </div>
+          <p className="dash-auth-foot">For hospital staff only. Patient details stay private.</p>
+        </div>
+      </section>
+      <section className="dash-auth-form-wrap">
+        <form className="dash-auth-form" onSubmit={submit}>
+          <div className="dash-auth-mobile-brand"><Brand /></div>
+          <h1>Sign in</h1>
+          <p className="dash-auth-lead">Use the email and password given to you by the hospital.</p>
+          {mode === 'demo' && <p className="dash-demo-note">Local demo: the password is <code>demo</code> unless DEMO_PASSWORD is set. Data resets when the dev server restarts.</p>}
+          {unavailable && <p className="dash-error">Sign-in is not set up yet. Add VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.</p>}
+          <label className="dash-label" htmlFor="dash-email">Email</label>
+          <input id="dash-email" className="dash-input" type="email" autoComplete="username" value={email} onChange={(event) => setEmail(event.target.value)} required />
+          <label className="dash-label" htmlFor="dash-password">Password</label>
+          <input id="dash-password" className="dash-input" type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
+          {error && <p className="dash-error" role="alert">{error}</p>}
+          <button className="dash-button dash-primary dash-auth-submit" type="submit" disabled={busy || unavailable}>
+            {busy ? <LoaderCircle className="dash-spin" size={18} aria-hidden="true" /> : <LockKeyhole size={17} aria-hidden="true" />} Sign in
+          </button>
+        </form>
+      </section>
     </main>
+  );
+}
+
+function Brand({ light = false }: { light?: boolean }) {
+  return (
+    <span className={`dash-logo${light ? ' is-light' : ''}`}>
+      <img src="/assets/sri-siri-hospital-logo.png" alt="" width="40" height="40" />
+      <span><strong>Sri Siri Hospital</strong><small>Tanuku · Consultations</small></span>
+    </span>
   );
 }
 
@@ -116,10 +133,19 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
   const [locked, setLocked] = useState(soundLocked);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [busy, setBusy] = useState<Record<string, string>>({});
-  const [sendDialog, setSendDialog] = useState<{ title: string; consultation: Consultation; message: Message; kind?: 'confirmation' } | null>(null);
+  const [sendDialog, setSendDialog] = useState<{ title: string; lead?: string; consultation: Consultation; message: Message; kind?: 'confirmation' } | null>(null);
   const [rejecting, setRejecting] = useState<Consultation | null>(null);
   const [historyFor, setHistoryFor] = useState<Consultation | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [moving, setMoving] = useState<Consultation | null>(null);
+  const [cancelling, setCancelling] = useState<Consultation | null>(null);
+  const [booking, setBooking] = useState(false);
+  const [hoursFor, setHoursFor] = useState<Rule[] | null>(null);
+  const [timeOffDraft, setTimeOffDraft] = useState<TimeOffDraft | null>(null);
+  const [calendarKey, setCalendarKey] = useState(0);
+  const [affected, setAffected] = useState<Consultation[] | null>(null);
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Consultation[] | null>(null);
   const [live, setLive] = useState(false);
   const seenRequests = useRef<Set<string> | null>(null);
   const seenReminders = useRef(new Set<string>());
@@ -259,174 +285,273 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
     onSignedOut();
   }
 
+  const [view, setView] = useState<View>('overview');
+  const [me, setMe] = useState<{ name: string; email: string } | null>(null);
+  useEffect(() => {
+    staffApi<{ name: string; email: string }>(mode, 'me').then(setMe).catch(() => {});
+  }, [mode]);
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [view]);
+  // Patient search, a moment after typing stops.
+  useEffect(() => {
+    const text = query.trim();
+    if (text.length < 2) { setResults(null); return undefined; }
+    const timer = window.setTimeout(() => {
+      staffApi<{ results: Consultation[] }>(mode, `consultations/search?q=${encodeURIComponent(text)}`).then((value) => setResults(value.results)).catch(handleError);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [query, mode, handleError]);
+  // Keeps the pinned reminders panel just under the header, whatever its height.
+  useEffect(() => {
+    const header = document.querySelector<HTMLElement>('.dash-top');
+    const shell = document.querySelector<HTMLElement>('.dash');
+    if (!header || !shell) return;
+    const observer = new ResizeObserver(() => shell.style.setProperty('--dash-top-h', `${header.offsetHeight + 12}px`));
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [data !== null]);
+
   if (!data) {
     return (
       <main className="dash-center">
         {loadError ? (
-          <div className="dash-login"><p className="dash-error">{loadError}</p><button className="dash-button" type="button" onClick={load}><RefreshCw size={16} aria-hidden="true" /> Try again</button></div>
+          <div className="dash-panel dash-center-card"><p className="dash-error">{loadError}</p><button className="dash-button" type="button" onClick={load}><RefreshCw size={16} aria-hidden="true" /> Try again</button></div>
         ) : <LoaderCircle className="dash-spin" size={28} aria-label="Loading" />}
       </main>
     );
   }
 
-  const upcoming = data.consultations.filter((item) => item.status === 'scheduled');
+  const upcoming = data.consultations.filter((item) => item.status === 'scheduled').sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+  const todayKey = istDay(new Date(now).toISOString());
+  const today = upcoming.filter((item) => istDay(item.starts_at) === todayKey);
+  const next = today.find((item) => Date.parse(item.ends_at) > now);
   const recent = data.consultations
     .filter((item) => !['requested', 'scheduled'].includes(item.status))
     .sort((a, b) => b.starts_at.localeCompare(a.starts_at));
+  const overdue = due.some((item) => item.overdue);
+
+  const nav: Array<{ id: View | 'settings'; label: string; icon: ReactNode; count?: number; alert?: boolean }> = [
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={19} aria-hidden="true" />, count: due.length + requests.length, alert: overdue },
+    { id: 'schedule', label: 'Schedule', icon: <CalendarDays size={19} aria-hidden="true" />, count: upcoming.length },
+    { id: 'calendar', label: 'Calendar', icon: <CalendarRange size={19} aria-hidden="true" /> },
+    { id: 'history', label: 'History', icon: <History size={19} aria-hidden="true" /> },
+    { id: 'settings', label: 'Settings', icon: <Settings size={19} aria-hidden="true" /> },
+  ];
+  const go = (id: View | 'settings') => (id === 'settings' ? setShowSettings(true) : setView(id));
+  const changed = () => { load(); setCalendarKey((value) => value + 1); };
+  const finish = (title: string, lead: string, confirm: boolean) => (result: ActionResult) => {
+    setMoving(null);
+    setCancelling(null);
+    setBooking(false);
+    setTimeOffDraft(null);
+    setAffected((current) => current?.filter((item) => item.id !== result.consultation.id) ?? null);
+    setSendDialog({ title, lead, consultation: result.consultation, message: result.message, kind: confirm && result.consultation.status === 'scheduled' ? 'confirmation' : undefined });
+    changed();
+  };
+  const titles: Record<View, string> = { overview: `${greeting(now)}, ${me?.name ?? data.doctor.name}`, schedule: 'Schedule', calendar: 'Calendar', history: 'Patients and history' };
+  const rowProps = { now, onReschedule: setMoving, onCancel: setCancelling, onStart: startMeeting, onHistory: setHistoryFor, onConfirmation: (item: Consultation) => item.messages.confirmation && setSendDialog({ title: 'Send confirmation again', consultation: item, message: item.messages.confirmation, kind: 'confirmation' as const }) };
 
   return (
     <div className="dash">
-      <header className="dash-top">
-        <div className="dash-top-inner">
-          <div className="dash-title">
-            <span className="dash-brand">Sri Siri Hospital</span>
-            <h1>Consultations</h1>
+      <aside className="dash-side" aria-label="Dashboard navigation">
+        <Brand light />
+        <nav className="dash-nav">
+          {nav.map((item) => (
+            <button key={item.id} type="button" className={`dash-nav-item${view === item.id ? ' is-active' : ''}`} aria-current={view === item.id ? 'page' : undefined} onClick={() => go(item.id)}>
+              {item.icon}<span>{item.label}</span>
+              {Boolean(item.count) && <b className={`dash-nav-count${item.alert ? ' is-alert' : ''}`}>{item.count}</b>}
+            </button>
+          ))}
+        </nav>
+        <div className="dash-side-foot">
+          <div className="dash-user">
+            <span className="dash-avatar is-light" aria-hidden="true">{initials(me?.name ?? data.doctor.name)}</span>
+            <span><strong>{me?.name ?? data.doctor.name}</strong><small>{me?.email ?? 'Signed in'}</small></span>
+          </div>
+          <button className="dash-side-signout" type="button" onClick={logout}><LogOut size={17} aria-hidden="true" /> Sign out</button>
+        </div>
+      </aside>
+
+      <div className="dash-body">
+        <header className="dash-top">
+          <div className="dash-top-brand"><Brand /></div>
+          <div className="dash-top-title">
+            <p className="dash-top-date">{fullDate(now)}</p>
+            <h1>{titles[view]}</h1>
+            {view === 'overview' && (
+              <p className="dash-top-sub">
+                {today.length ? `${today.length} consultation${today.length > 1 ? 's' : ''} today${next ? ` · next at ${formatTime(next.starts_at)} with ${next.patient_name}` : ' · all done'}` : 'No consultations today'}
+              </p>
+            )}
           </div>
           <div className="dash-top-actions">
             <span className={`dash-live${loadError ? ' is-off' : ''}`} title={live ? 'Updates arrive instantly' : 'Checks for updates every few seconds'}>
               <i aria-hidden="true" /> {loadError ? 'Offline' : live ? 'Live' : 'Auto-refresh'}
             </span>
-            <button className="dash-icon-button" type="button" onClick={toggleSound} aria-pressed={soundOn} aria-label={soundOn ? 'Turn sound off' : 'Turn sound on'} title={soundOn ? 'Sound on' : 'Sound off'}>
-              {soundOn ? <Volume2 size={19} aria-hidden="true" /> : <VolumeX size={19} aria-hidden="true" />}
+            <button className={`dash-button dash-sound${soundOn ? '' : ' is-off'}`} type="button" onClick={toggleSound} aria-pressed={soundOn}>
+              {soundOn ? <Volume2 size={17} aria-hidden="true" /> : <VolumeX size={17} aria-hidden="true" />}
+              <span>{soundOn ? 'Sound on' : 'Sound off'}</span>
             </button>
-            <button className="dash-icon-button" type="button" onClick={() => setShowSettings(true)} aria-label="Settings" title="Settings"><Settings size={19} aria-hidden="true" /></button>
-            <button className="dash-icon-button" type="button" onClick={logout} aria-label="Sign out" title="Sign out"><LogOut size={19} aria-hidden="true" /></button>
+            <button className="dash-icon-button dash-mobile-only" type="button" onClick={logout} aria-label="Sign out"><LogOut size={18} aria-hidden="true" /></button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="dash-main">
-        {soundOn && locked && (
-          <button className="dash-sound-banner" type="button" onClick={enableSound}>
-            <BellRing size={18} aria-hidden="true" /> Tap here to turn on alert sounds for new requests and reminders.
-          </button>
-        )}
-        {loadError && <p className="dash-error dash-inline-error" role="alert">{loadError} Retrying…</p>}
-        {data.zoomMode === 'mock' && (
-          <p className="dash-mock-note"><CircleAlert size={16} aria-hidden="true" /> Zoom keys are not added yet, so meetings are test links that do not open a real call.</p>
-        )}
+        <main className="dash-main">
+          {soundOn && locked && (
+            <button className="dash-banner is-warn" type="button" onClick={enableSound}>
+              <BellRing size={18} aria-hidden="true" /> <span><strong>Alert sounds are paused by the browser.</strong> Click here once to turn them on.</span>
+            </button>
+          )}
+          {loadError && <p className="dash-banner is-error" role="alert"><CircleAlert size={18} aria-hidden="true" /> {loadError} Retrying…</p>}
+          {data.zoomMode === 'mock' && (
+            <p className="dash-banner"><CircleAlert size={18} aria-hidden="true" /> Zoom keys are not added yet, so meetings are test links that do not open a real call.</p>
+          )}
 
-        <RemindersPanel
-          due={due}
-          byId={byId}
-          now={now}
-          busy={busy}
-          onMarkSent={markSent}
-        />
+          {view === 'overview' && (
+            <>
+              <RemindersPanel due={due} byId={byId} now={now} busy={busy} onMarkSent={markSent} />
 
-        <section className="dash-section" aria-labelledby="dash-requests">
-          <div className="dash-section-head">
-            <h2 id="dash-requests">New requests</h2>
-            <span className="dash-count">{requests.length}</span>
-          </div>
-          {requests.length ? (
-            <div className="dash-grid">
-              {requests.map((item) => (
-                <article className="dash-card is-request" key={item.id}>
-                  <div className="dash-card-top">
-                    <span className="dash-when">{when(item.starts_at)}</span>
-                    <span className="dash-ref">{item.ref_code}</span>
-                  </div>
-                  <h3>{item.patient_name}</h3>
-                  <p className="dash-phone"><a href={`tel:${item.patient_phone}`}>{item.patient_phone_display}</a></p>
-                  <p className="dash-meta">Requested {minutesAgo(item.created_at, now)}</p>
-                  <div className="dash-actions">
-                    <button className="dash-button dash-primary" type="button" onClick={() => accept(item)} disabled={Boolean(busy[item.id])}>
-                      {busy[item.id] === 'accept' ? <LoaderCircle className="dash-spin" size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />}
-                      {busy[item.id] === 'accept' ? 'Creating Zoom meeting…' : 'Accept'}
-                    </button>
-                    <button className="dash-button dash-danger-outline" type="button" onClick={() => setRejecting(item)} disabled={Boolean(busy[item.id])}>
-                      <X size={17} aria-hidden="true" /> Reject
-                    </button>
-                  </div>
-                </article>
-              ))}
+              <BookingWeek mode={mode} now={now} refreshKey={calendarKey} onChanged={load} onAffected={setAffected} onError={handleError} toast={toast} />
+
+              <section className="dash-panel" aria-labelledby="dash-requests">
+                <PanelHead id="dash-requests" title="New requests" count={requests.length} note="Accept to create the Zoom meeting, or reject with a reason." />
+                {requests.length ? (
+                  <ul className="dash-table">
+                    {requests.map((item) => (
+                      <li className="dash-tr is-request" key={item.id}>
+                        <Patient item={item} />
+                        <div className="dash-td-when">
+                          <strong>{formatTime(item.starts_at)}</strong>
+                          <span>{dayLabel(item.starts_at, now)}</span>
+                        </div>
+                        <div className="dash-td-meta"><span>Requested {minutesAgo(item.created_at, now)}</span></div>
+                        <div className="dash-td-actions">
+                          <button className="dash-button dash-primary" type="button" onClick={() => accept(item)} disabled={Boolean(busy[item.id])}>
+                            {busy[item.id] === 'accept' ? <LoaderCircle className="dash-spin" size={17} aria-hidden="true" /> : <Check size={17} aria-hidden="true" />}
+                            {busy[item.id] === 'accept' ? 'Creating meeting…' : 'Accept'}
+                          </button>
+                          <button className="dash-button dash-danger-outline" type="button" onClick={() => setRejecting(item)} disabled={Boolean(busy[item.id])}>
+                            <X size={17} aria-hidden="true" /> Reject
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <Empty icon={<Inbox size={22} aria-hidden="true" />} text="No new requests. They appear here by themselves, with a sound." />}
+              </section>
+
+              <section className="dash-panel dash-print-area" aria-labelledby="dash-today">
+                <div className="dash-print-head" aria-hidden="true"><strong>Sri Siri Hospital, Tanuku</strong><span>Video consultations · {data.doctor.name} · {fullDate(now)}</span></div>
+                <PanelHead id="dash-today" title="Today’s consultations" count={today.length} action={(
+                  <span className="dash-panel-actions">
+                    {today.length > 0 && <button className="dash-link-button" type="button" onClick={() => window.print()}><Printer size={15} aria-hidden="true" /> Print day sheet</button>}
+                    {upcoming.length > today.length && <button className="dash-link-button" type="button" onClick={() => setView('schedule')}>Full schedule <ChevronRight size={15} aria-hidden="true" /></button>}
+                  </span>
+                )} />
+                {today.length ? (
+                  <ul className="dash-table">{today.map((item) => <ScheduleRow key={item.id} item={item} {...rowProps} />)}</ul>
+                ) : <Empty icon={<CalendarDays size={22} aria-hidden="true" />} text={upcoming.length ? `Nothing today. Next: ${when(upcoming[0].starts_at)}, ${upcoming[0].patient_name}.` : 'No confirmed consultations coming up.'} />}
+              </section>
+            </>
+          )}
+
+          {view === 'schedule' && (
+            <div className="dash-view-bar">
+              <p>All confirmed consultations from today on. Reschedule or cancel from here; the patient gets a prefilled WhatsApp message.</p>
+              <button className="dash-button dash-primary" type="button" onClick={() => setBooking(true)}><UserPlus size={17} aria-hidden="true" /> New booking</button>
             </div>
-          ) : <p className="dash-empty">No new requests. New ones appear here by themselves, with a sound.</p>}
-        </section>
+          )}
+          {view === 'schedule' && (
+            upcoming.length ? (
+              groupByDay(upcoming).map(([key, items]) => (
+                <section className="dash-panel" key={key} aria-label={dayLabel(items[0].starts_at, now)}>
+                  <PanelHead title={dayLabel(items[0].starts_at, now)} count={items.length} />
+                  <ul className="dash-table">{items.map((item) => <ScheduleRow key={item.id} item={item} {...rowProps} />)}</ul>
+                </section>
+              ))
+            ) : <section className="dash-panel"><Empty icon={<CalendarDays size={22} aria-hidden="true" />} text="No confirmed consultations coming up." /></section>
+          )}
 
-        <section className="dash-section" aria-labelledby="dash-upcoming">
-          <div className="dash-section-head">
-            <h2 id="dash-upcoming">Upcoming</h2>
-            <span className="dash-count">{upcoming.length}</span>
-          </div>
-          {upcoming.length ? (
-            <div className="dash-list">
-              {upcoming.map((item) => {
-                const startsIn = Math.round((Date.parse(item.starts_at) - now) / 60_000);
-                return (
-                  <article className="dash-row" key={item.id}>
-                    <div className="dash-row-time">
-                      <strong>{formatTime(item.starts_at)}</strong>
-                      <span>{formatDate(item.starts_at)}</span>
-                    </div>
-                    <div className="dash-row-main">
-                      <h3>{item.patient_name} <span className="dash-ref">{item.ref_code}</span></h3>
-                      <p><a href={`tel:${item.patient_phone}`}>{item.patient_phone_display}</a></p>
-                      <div className="dash-chips">
-                        <SentChip label="Confirmation" at={item.confirmation_sent_at} />
-                        <SentChip label="Zoom link" at={item.link_reminder_sent_at} />
-                        {item.meeting?.provider === 'zoom-mock' && <span className="dash-chip is-test">Test meeting</span>}
+          {view === 'calendar' && (
+            <CalendarView
+              mode={mode}
+              now={now}
+              refreshKey={calendarKey}
+              onChanged={load}
+              onReschedule={setMoving}
+              onCancel={setCancelling}
+              onHistory={setHistoryFor}
+              onHours={setHoursFor}
+              onTimeOff={setTimeOffDraft}
+              onNewBooking={() => setBooking(true)}
+              onError={handleError}
+              toast={toast}
+              onAffected={setAffected}
+            />
+          )}
+
+          {view === 'history' && (
+            <label className="dash-search">
+              <Search size={18} aria-hidden="true" />
+              <span className="dash-sr">Search patients</span>
+              <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by patient name, mobile number or reference (SS-…)" />
+            </label>
+          )}
+          {view === 'history' && (
+            <section className="dash-panel" aria-labelledby="dash-history">
+              <PanelHead id="dash-history" title={results ? `Results for “${query.trim()}”` : 'Last few days'} count={(results ?? recent).length} note={results ? 'All consultations, newest first.' : 'Completed, rejected, cancelled and expired consultations, with feedback.'} />
+              {(results ?? recent).length ? (
+                <ul className="dash-table">
+                  {(results ?? recent).map((item) => (
+                    <li className="dash-tr" key={item.id}>
+                      <Patient item={item} />
+                      <div className="dash-td-when">
+                        <strong>{formatTime(item.starts_at)}</strong>
+                        <span>{dayLabel(item.starts_at, now)}</span>
                       </div>
-                    </div>
-                    <div className="dash-row-actions">
-                      {startsIn <= 15 && startsIn > -60 && <span className="dash-soon">{startsIn > 0 ? `Starts in ${startsIn} min` : 'Now'}</span>}
-                      <button className="dash-button dash-primary" type="button" onClick={() => startMeeting(item)}><Video size={17} aria-hidden="true" /> Start meeting</button>
-                      {item.messages.confirmation && (
-                        <button className="dash-button" type="button" onClick={() => setSendDialog({ title: 'Send confirmation again', consultation: item, message: item.messages.confirmation!, kind: 'confirmation' })}>
-                          <WhatsAppGlyph /> Confirmation
-                        </button>
-                      )}
-                      <button className="dash-icon-button" type="button" onClick={() => setHistoryFor(item)} aria-label={`History for ${item.ref_code}`} title="History"><History size={18} aria-hidden="true" /></button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : <p className="dash-empty">No confirmed consultations coming up.</p>}
-        </section>
+                      <div className="dash-td-meta">
+                        <span className={`dash-status status-${item.status}`}>{item.status_label}</span>
+                        {item.reject_reason && <span className="dash-reason">{item.reject_reason}</span>}
+                        {item.feedback && (
+                          <span className="dash-feedback">
+                            <span className="dash-stars" aria-label={`${item.feedback.rating} of 5`}>
+                              {Array.from({ length: 5 }, (_, index) => <Star key={index} size={14} className={index < item.feedback!.rating ? 'is-on' : ''} aria-hidden="true" />)}
+                            </span>
+                            {item.feedback.comment && <q>{item.feedback.comment}</q>}
+                          </span>
+                        )}
+                      </div>
+                      <div className="dash-td-actions">
+                        {item.messages.rejection && 'url' in item.messages.rejection && (
+                          <a className="dash-button" href={item.messages.rejection.url} target="_blank" rel="noreferrer"><WhatsAppGlyph /> Rejection message</a>
+                        )}
+                        {item.messages.cancellation && 'url' in item.messages.cancellation && (
+                          <a className="dash-button" href={item.messages.cancellation.url} target="_blank" rel="noreferrer"><WhatsAppGlyph /> Cancellation message</a>
+                        )}
+                        {['requested', 'scheduled'].includes(item.status) && (
+                          <>
+                            <button className="dash-icon-button" type="button" onClick={() => setMoving(item)} aria-label={`Reschedule ${item.patient_name}`} title="Reschedule"><CalendarClock size={17} aria-hidden="true" /></button>
+                            <button className="dash-icon-button is-danger" type="button" onClick={() => setCancelling(item)} aria-label={`Cancel ${item.patient_name}`} title="Cancel"><CalendarX2 size={17} aria-hidden="true" /></button>
+                          </>
+                        )}
+                        <button className="dash-icon-button" type="button" onClick={() => setHistoryFor(item)} aria-label={`Timeline for ${item.ref_code}`} title="Timeline"><History size={18} aria-hidden="true" /></button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : <Empty icon={results ? <Search size={22} aria-hidden="true" /> : <History size={22} aria-hidden="true" />} text={results ? 'No patient matches this search.' : 'Nothing in the last few days.'} />}
+            </section>
+          )}
+        </main>
+      </div>
 
-        <section className="dash-section" aria-labelledby="dash-recent">
-          <div className="dash-section-head">
-            <h2 id="dash-recent">Recent</h2>
-            <span className="dash-count">{recent.length}</span>
-          </div>
-          {recent.length ? (
-            <div className="dash-list is-compact">
-              {recent.map((item) => (
-                <article className="dash-row" key={item.id}>
-                  <div className="dash-row-time">
-                    <strong>{formatTime(item.starts_at)}</strong>
-                    <span>{formatDate(item.starts_at)}</span>
-                  </div>
-                  <div className="dash-row-main">
-                    <h3>{item.patient_name} <span className="dash-ref">{item.ref_code}</span></h3>
-                    <p>
-                      <span className={`dash-status status-${item.status}`}>{item.status_label}</span>
-                      {item.reject_reason && <span className="dash-reason">{item.reject_reason}</span>}
-                    </p>
-                    {item.feedback && (
-                      <p className="dash-feedback">
-                        <span className="dash-stars" aria-label={`${item.feedback.rating} of 5`}>
-                          {Array.from({ length: 5 }, (_, index) => <Star key={index} size={14} className={index < item.feedback!.rating ? 'is-on' : ''} aria-hidden="true" />)}
-                        </span>
-                        {item.feedback.comment && <q>{item.feedback.comment}</q>}
-                        {item.feedback.allow_public && <span className="dash-chip">May be shown on website</span>}
-                      </p>
-                    )}
-                  </div>
-                  <div className="dash-row-actions">
-                    {item.messages.rejection && (
-                      <a className="dash-button" href={(item.messages.rejection as { url?: string }).url} target="_blank" rel="noreferrer"><WhatsAppGlyph /> Rejection message</a>
-                    )}
-                    <button className="dash-icon-button" type="button" onClick={() => setHistoryFor(item)} aria-label={`History for ${item.ref_code}`} title="History"><History size={18} aria-hidden="true" /></button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : <p className="dash-empty">Nothing in the last few days.</p>}
-        </section>
-      </main>
+      <nav className="dash-tabbar" aria-label="Dashboard sections">
+        {nav.map((item) => (
+          <button key={item.id} type="button" className={view === item.id ? 'is-active' : ''} aria-current={view === item.id ? 'page' : undefined} onClick={() => go(item.id)}>
+            {item.icon}<span>{item.label}</span>
+            {Boolean(item.count) && <b className={item.alert ? 'is-alert' : ''}>{item.count}</b>}
+          </button>
+        ))}
+      </nav>
 
       {sendDialog && (
         <SendDialog
@@ -438,15 +563,19 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
         />
       )}
       {rejecting && (
-        <RejectDialog
-          consultation={rejecting}
-          mode={mode}
-          onError={handleError}
-          onDone={() => { load(); }}
-          onClose={() => setRejecting(null)}
-        />
+        <RejectDialog consultation={rejecting} mode={mode} onError={handleError} onDone={() => { load(); }} onClose={() => setRejecting(null)} />
       )}
       {historyFor && <HistoryDialog consultation={historyFor} mode={mode} onClose={() => setHistoryFor(null)} />}
+      {moving && <RescheduleDialog mode={mode} consultation={moving} onDone={finish('Send the new time on WhatsApp', 'Moved. ', true)} onClose={() => setMoving(null)} />}
+      {cancelling && <CancelDialog mode={mode} consultation={cancelling} onDone={finish('Send the cancellation on WhatsApp', 'Cancelled and the time is free again. ', false)} onClose={() => setCancelling(null)} />}
+      {booking && <NewBookingDialog mode={mode} onDone={finish('Send the confirmation on WhatsApp', 'Booked and confirmed. The Zoom meeting is ready. ', true)} onClose={() => setBooking(false)} />}
+      {hoursFor && <ClinicHoursDialog mode={mode} rules={hoursFor} onSaved={() => { toast('Clinic hours saved. The booking page uses them now.'); changed(); }} onClose={() => setHoursFor(null)} />}
+      {affected && !moving && !cancelling && (
+        <AffectedDialog title="Bookings stopped" items={affected} onReschedule={setMoving} onCancel={setCancelling} onClose={() => setAffected(null)} />
+      )}
+      {timeOffDraft && !moving && !cancelling && (
+        <TimeOffDialog mode={mode} draft={timeOffDraft} onSaved={() => { toast('Time off added. Patients can’t book it.'); changed(); }} onReschedule={setMoving} onCancel={setCancelling} onClose={() => setTimeOffDraft(null)} />
+      )}
       {showSettings && (
         <SettingsDialog
           settings={data.settings}
@@ -463,6 +592,86 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
   );
 }
 
+type View = 'overview' | 'schedule' | 'calendar' | 'history';
+
+const istDay = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+const initials = (name: string) => name.replace(/^Dr\.?\s+/i, '').split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || '?';
+const fullDate = (now: number) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(now));
+function greeting(now: number) {
+  const hour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: 'numeric', hourCycle: 'h23' }).format(new Date(now)));
+  return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+}
+function dayLabel(iso: string, now: number) {
+  const key = istDay(iso);
+  if (key === istDay(new Date(now).toISOString())) return 'Today';
+  if (key === istDay(new Date(now + 86_400_000).toISOString())) return 'Tomorrow';
+  return formatDate(iso);
+}
+function groupByDay(items: Consultation[]) {
+  const groups = new Map<string, Consultation[]>();
+  for (const item of items) groups.set(istDay(item.starts_at), [...(groups.get(istDay(item.starts_at)) ?? []), item]);
+  return [...groups];
+}
+
+function PanelHead({ id, title, count, note, action }: { id?: string; title: string; count?: number; note?: string; action?: ReactNode }) {
+  return (
+    <div className="dash-panel-head">
+      <div>
+        <h2 id={id}>{title}{count !== undefined && <span className="dash-count">{count}</span>}</h2>
+        {note && <p>{note}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function Empty({ icon, text }: { icon: ReactNode; text: string }) {
+  return <div className="dash-empty"><span aria-hidden="true">{icon}</span><p>{text}</p></div>;
+}
+
+function Patient({ item }: { item: Consultation }) {
+  return (
+    <div className="dash-td-patient">
+      <span className="dash-avatar" aria-hidden="true">{initials(item.patient_name)}</span>
+      <span>
+        <strong>{item.patient_name}</strong>
+        <small><a href={`tel:${item.patient_phone}`}>{item.patient_phone_display}</a> · {item.ref_code}</small>
+      </span>
+    </div>
+  );
+}
+
+function ScheduleRow({ item, now, onStart, onHistory, onConfirmation, onReschedule, onCancel }: {
+  item: Consultation; now: number; onStart: (item: Consultation) => void; onHistory: (item: Consultation) => void; onConfirmation: (item: Consultation) => void;
+  onReschedule: (item: Consultation) => void; onCancel: (item: Consultation) => void;
+}) {
+  const startsIn = Math.round((Date.parse(item.starts_at) - now) / 60_000);
+  const inProgress = startsIn <= 0 && Date.parse(item.ends_at) > now;
+  return (
+    <li className={`dash-tr${inProgress ? ' is-now' : ''}`}>
+      <div className="dash-td-when">
+        <strong>{formatTime(item.starts_at)}</strong>
+        <span>{inProgress ? 'In progress' : startsIn > 0 && startsIn <= 60 ? `In ${startsIn} min` : '30 min'}</span>
+      </div>
+      <Patient item={item} />
+      <div className="dash-td-meta">
+        <SentChip label="Confirmation" at={item.confirmation_sent_at} />
+        <SentChip label="Zoom link" at={item.link_reminder_sent_at} />
+        {item.meeting?.provider === 'zoom-mock' && <span className="dash-chip is-test">Test meeting</span>}
+      </div>
+      <div className="dash-td-actions">
+        <button className="dash-button dash-primary" type="button" onClick={() => onStart(item)}><Video size={17} aria-hidden="true" /> Start meeting</button>
+        {item.messages.confirmation && (
+          <button className="dash-icon-button" type="button" onClick={() => onConfirmation(item)} aria-label={`Confirmation message for ${item.patient_name}`} title="Confirmation message"><WhatsAppGlyph /></button>
+        )}
+        <button className="dash-icon-button" type="button" onClick={() => onReschedule(item)} aria-label={`Reschedule ${item.patient_name}`} title="Reschedule"><CalendarClock size={18} aria-hidden="true" /></button>
+        <button className="dash-icon-button is-danger" type="button" onClick={() => onCancel(item)} aria-label={`Cancel ${item.patient_name}`} title="Cancel"><CalendarX2 size={18} aria-hidden="true" /></button>
+        <button className="dash-icon-button" type="button" onClick={() => onHistory(item)} aria-label={`Timeline for ${item.ref_code}`} title="Timeline"><History size={18} aria-hidden="true" /></button>
+      </div>
+    </li>
+  );
+}
+
 function SentChip({ label, at }: { label: string; at: string | null }) {
   return <span className={`dash-chip${at ? ' is-done' : ''}`}>{at ? <Check size={13} aria-hidden="true" /> : null}{label} {at ? 'sent' : 'not sent'}</span>;
 }
@@ -476,47 +685,57 @@ function RemindersPanel({ due, byId, now, busy, onMarkSent }: {
   onMarkSent: (id: string, kind: DueReminder['kind']) => void;
 }) {
   const overdueCount = due.filter((item) => item.overdue).length;
+  if (!due.length) {
+    return (
+      <section className="dash-reminders is-clear" aria-labelledby="dash-reminders-title">
+        <span className="dash-reminders-icon" aria-hidden="true"><Check size={18} /></span>
+        <div>
+          <h2 id="dash-reminders-title">No WhatsApp messages to send</h2>
+          <p>Zoom links appear here 30 minutes before each consultation, and feedback requests 15 minutes after it ends.</p>
+        </div>
+      </section>
+    );
+  }
   return (
-    <section className={`dash-reminders${due.length ? ' has-due' : ''}${overdueCount ? ' has-overdue' : ''}`} aria-labelledby="dash-reminders-title">
+    <section className={`dash-reminders has-due${overdueCount ? ' has-overdue' : ''}`} aria-labelledby="dash-reminders-title">
       <div className="dash-reminders-head">
-        <BellRing size={20} aria-hidden="true" />
-        <h2 id="dash-reminders-title">Reminders due</h2>
-        <span className="dash-count">{due.length}</span>
-        <p>Send these on WhatsApp, then tap “Mark as sent”. They turn red after {OVERDUE_AFTER_MINUTES} minutes.</p>
+        <span className="dash-reminders-icon" aria-hidden="true"><BellRing size={18} /></span>
+        <div>
+          <h2 id="dash-reminders-title">Reminders due <span className="dash-count">{due.length}</span></h2>
+          <p>{overdueCount ? `${overdueCount} overdue. ` : ''}Send on WhatsApp, then mark as sent. Reminders turn red after {OVERDUE_AFTER_MINUTES} minutes.</p>
+        </div>
       </div>
-      {due.length ? (
-        <ul className="dash-reminder-list">
-          {due.map((item) => {
-            const consultation = byId.get(item.consultationId);
-            if (!consultation) return null;
-            const kind = REMINDER_KINDS[item.kind];
-            const message = consultation.messages[kind.template as 'confirmation' | 'link_reminder' | 'feedback'];
-            const title = item.kind === 'link'
-              ? `Send link to ${consultation.patient_name} — ${formatTime(consultation.starts_at)}`
-              : item.kind === 'confirmation'
-                ? `Send confirmation to ${consultation.patient_name} — ${when(consultation.starts_at)}`
-                : `Ask ${consultation.patient_name} for feedback — ${formatTime(consultation.starts_at)} consultation`;
-            const late = Math.round((now - Date.parse(item.dueAt)) / 60_000);
-            return (
-              <li key={item.key} className={`dash-reminder${item.overdue ? ' is-overdue' : ''}`}>
-                <div className="dash-reminder-text">
-                  <span className="dash-reminder-kind">{kind.title}{item.overdue ? ` · overdue ${late} min` : late > 0 ? ` · due ${late} min ago` : ''}</span>
-                  <strong>{title}</strong>
-                  <span className="dash-reminder-phone">{consultation.patient_phone_display} · {consultation.ref_code}</span>
-                </div>
-                <div className="dash-reminder-actions">
-                  {message && 'url' in message ? (
-                    <a className="dash-button dash-whatsapp" href={message.url} target="_blank" rel="noreferrer"><WhatsAppGlyph /> Open WhatsApp</a>
-                  ) : <span className="dash-chip">Sent automatically</span>}
-                  <button className="dash-button" type="button" onClick={() => onMarkSent(consultation.id, item.kind)} disabled={Boolean(busy[`${consultation.id}:${item.kind}`])}>
-                    <Check size={17} aria-hidden="true" /> Mark as sent
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : <p className="dash-empty">Nothing to send right now. Zoom links appear here 30 minutes before each consultation, and feedback requests 15 minutes after it ends.</p>}
+      <ul className="dash-reminder-list">
+        {due.map((item) => {
+          const consultation = byId.get(item.consultationId);
+          if (!consultation) return null;
+          const kind = REMINDER_KINDS[item.kind];
+          const message = consultation.messages[kind.template as 'confirmation' | 'link_reminder' | 'feedback'];
+          const title = item.kind === 'link'
+            ? `Send link to ${consultation.patient_name} — ${formatTime(consultation.starts_at)}`
+            : item.kind === 'confirmation'
+              ? `Send confirmation to ${consultation.patient_name} — ${when(consultation.starts_at)}`
+              : `Ask ${consultation.patient_name} for feedback — ${formatTime(consultation.starts_at)} consultation`;
+          const late = Math.round((now - Date.parse(item.dueAt)) / 60_000);
+          return (
+            <li key={item.key} className={`dash-reminder${item.overdue ? ' is-overdue' : ''}`}>
+              <div className="dash-reminder-text">
+                <span className="dash-reminder-kind">{kind.title}{item.overdue ? ` · overdue ${late} min` : late > 0 ? ` · due ${late} min ago` : ' · due now'}</span>
+                <strong>{title}</strong>
+                <span className="dash-reminder-phone">{consultation.patient_phone_display} · {consultation.ref_code}</span>
+              </div>
+              <div className="dash-reminder-actions">
+                {message && 'url' in message ? (
+                  <a className="dash-button dash-whatsapp" href={message.url} target="_blank" rel="noreferrer"><WhatsAppGlyph /> Open WhatsApp</a>
+                ) : <span className="dash-chip">Sent automatically</span>}
+                <button className="dash-button" type="button" onClick={() => onMarkSent(consultation.id, item.kind)} disabled={Boolean(busy[`${consultation.id}:${item.kind}`])}>
+                  <Check size={17} aria-hidden="true" /> Mark as sent
+                </button>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }
@@ -525,54 +744,8 @@ function RemindersPanel({ due, byId, now, busy, onMarkSent }: {
 // Dialogs
 // ---------------------------------------------------------------------------
 
-function Modal({ title, onClose, children, wide = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
-  const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
-    return () => dialog?.close();
-  }, []);
-  return (
-    <dialog ref={ref} className={`dash-dialog${wide ? ' is-wide' : ''}`} onCancel={(event) => { event.preventDefault(); onClose(); }} aria-labelledby="dash-dialog-title">
-      <div className="dash-dialog-head">
-        <h2 id="dash-dialog-title">{title}</h2>
-        <button className="dash-icon-button" type="button" onClick={onClose} aria-label="Close"><X size={19} aria-hidden="true" /></button>
-      </div>
-      {children}
-    </dialog>
-  );
-}
 
-function MessagePreview({ message }: { message: Message }) {
-  return <pre className="dash-message-preview">{message.text}</pre>;
-}
 
-function SendDialog({ title, consultation, message, onMarkSent, onClose, busy, alreadySent }: {
-  title: string; consultation: Consultation; message: Message; onMarkSent?: () => void; onClose: () => void; busy: boolean; alreadySent: boolean;
-}) {
-  const [opened, setOpened] = useState(false);
-  return (
-    <Modal title={title} onClose={onClose}>
-      <p className="dash-dialog-lead">
-        {consultation.status === 'scheduled' ? 'Accepted. The Zoom meeting is ready. ' : ''}
-        Send this to <strong>{consultation.patient_name}</strong> ({consultation.patient_phone_display}):
-      </p>
-      <MessagePreview message={message} />
-      <div className="dash-dialog-actions">
-        {'url' in message ? (
-          <a className="dash-button dash-whatsapp" href={message.url} target="_blank" rel="noreferrer" onClick={() => setOpened(true)}><WhatsAppGlyph /> Send on WhatsApp</a>
-        ) : <span className="dash-chip is-done">Sent automatically</span>}
-        {onMarkSent && !alreadySent && (
-          <button className={`dash-button${opened ? ' dash-primary' : ''}`} type="button" onClick={onMarkSent} disabled={busy}>
-            <Check size={17} aria-hidden="true" /> Mark as sent
-          </button>
-        )}
-        {alreadySent && <span className="dash-chip is-done"><Check size={13} aria-hidden="true" /> Marked as sent</span>}
-      </div>
-      {onMarkSent && !alreadySent && <p className="dash-dialog-note">If you close this without marking it sent, it stays in “Reminders due”.</p>}
-    </Modal>
-  );
-}
 
 function RejectDialog({ consultation, mode, onError, onDone, onClose }: {
   consultation: Consultation; mode: AuthMode; onError: (reason: unknown) => void; onDone: () => void; onClose: () => void;
@@ -746,10 +919,3 @@ function SettingsDialog({ settings, mode, onSaved, onClose }: { settings: Settin
   );
 }
 
-function WhatsAppGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M12.04 2a9.9 9.9 0 0 0-8.5 15l-1.4 5 5.1-1.3A9.9 9.9 0 1 0 12.04 2Zm0 18.1a8.2 8.2 0 0 1-4.2-1.15l-.3-.18-3 .8.8-2.95-.2-.31a8.2 8.2 0 1 1 6.9 3.8Zm4.5-6.15c-.25-.12-1.46-.72-1.69-.8-.23-.08-.39-.12-.55.12-.17.25-.64.8-.78.97-.14.16-.29.18-.53.06a6.7 6.7 0 0 1-3.37-2.94c-.25-.44.25-.41.72-1.36.08-.16.04-.3-.02-.43-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.41-.55-.42h-.47a.9.9 0 0 0-.65.3 2.74 2.74 0 0 0-.86 2.04 4.76 4.76 0 0 0 1 2.53c.12.16 1.7 2.6 4.12 3.64 1.53.66 2.13.72 2.9.6.46-.07 1.46-.6 1.67-1.18.2-.58.2-1.08.14-1.18-.06-.1-.22-.17-.47-.29Z" />
-    </svg>
-  );
-}

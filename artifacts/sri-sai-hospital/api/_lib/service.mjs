@@ -4,13 +4,27 @@ import {
 } from '../../shared/messages.mjs';
 import { STATUS_LABELS } from '../../shared/status.mjs';
 import { HttpError } from './http.mjs';
-import { buildSlotDays, findSlot } from './slots.mjs';
+import { BOOKING_DAYS, buildSlotDays, calendarDays, findSlot, istDateKey, istMidnightOf } from './slots.mjs';
 import { StoreConflict } from './store/errors.mjs';
 import { hashToken, isHoldToken, newHoldToken, newRefCode, signLink, verifyLink } from './tokens.mjs';
 
 export const HOLD_SECONDS = 5 * 60;
 const LINK_DAYS_AFTER_END = 7;
 const DAY = 24 * 60 * 60 * 1000;
+const ACTIVE = ['requested', 'scheduled'];
+const actorOf = (staff) => ({ actor: staff.role === 'doctor' ? 'doctor' : 'staff', actorId: staff.user_id });
+
+function cleanName(value) {
+  const name = typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
+  return name.length >= 2 && name.length <= 80 && /^[\p{L}\p{M} .'-]+$/u.test(name) ? name : null;
+}
+
+function cleanReason(value, { required = true } = {}) {
+  const text = typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
+  if (!text && !required) return '';
+  if (text.length < 3 || text.length > 300) throw new HttpError(400, 'Please give a short reason (3 to 300 characters).', { reason: 'Please give a short reason.' });
+  return text;
+}
 
 const CONFLICT_MESSAGES = {
   slot_taken: [409, 'Someone has just taken this time. Please pick another one.'],
@@ -82,6 +96,9 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
     if (row.status === 'rejected') {
       messages.rejection = await prepare('rejection', row, doc, siteUrl, templates, { reason: row.reject_reason ?? '' });
     }
+    if (row.status === 'cancelled') {
+      messages.cancellation = await prepare('cancellation', row, doc, siteUrl, templates, { reason: row.reject_reason ?? '' });
+    }
     return {
       id: row.id,
       ref_code: row.ref_code,
@@ -115,10 +132,13 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
 
     async publicConfig() {
       const [doc, current] = await Promise.all([doctor(), settings()]);
+      const rules = await store.listRules(doc.id);
       return {
         hospitalWhatsapp: current.hospitalWhatsapp,
         hospitalWhatsappDisplay: current.hospitalWhatsappDisplay,
         holdMinutes: HOLD_SECONDS / 60,
+        bookingDays: BOOKING_DAYS,
+        hours: rules.map(({ weekday, start_minute, end_minute }) => ({ weekday, start_minute, end_minute })),
         auth: store.kind === 'memory' ? 'demo' : 'supabase',
         doctor: { name: doc.display_name, qualification: doc.qualification, registration: doc.registration_no, minutes: doc.consult_minutes },
       };
@@ -127,9 +147,15 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
     async slots(holdToken) {
       const doc = await doctor();
       const from = now();
-      const busy = await store.listBusy(doc.id, new Date(from).toISOString(), new Date(from + 15 * DAY).toISOString(), isHoldToken(holdToken) ? hashToken(holdToken) : undefined);
-      const rules = await store.listRules(doc.id);
-      return { days: buildSlotDays(rules, busy, from), generatedAt: new Date(from).toISOString() };
+      const fromIso = new Date(from).toISOString();
+      const toIso = new Date(from + (BOOKING_DAYS + 1) * DAY).toISOString();
+      const [busy, timeOff, rules] = await Promise.all([
+        store.listBusy(doc.id, fromIso, toIso, isHoldToken(holdToken) ? hashToken(holdToken) : undefined),
+        store.listTimeOff(doc.id, fromIso, toIso),
+        store.listRules(doc.id),
+      ]);
+      // Time off the doctor has blocked is never offered to patients.
+      return { days: buildSlotDays(rules, [...busy, ...timeOff], from), generatedAt: fromIso };
     },
 
     async hold({ start, holdToken }, ip) {
@@ -217,7 +243,7 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
         time: formatTime(row.starts_at),
         status: row.status,
         statusLabel: STATUS_LABELS[row.status],
-        rejectReason: row.status === 'rejected' ? row.reject_reason : null,
+        rejectReason: ['rejected', 'cancelled'].includes(row.status) ? row.reject_reason : null,
         joinUrl: showJoin ? row.join_url : null,
         passcode: showJoin ? row.meeting_passcode : null,
         feedbackUrl: ended && ['scheduled', 'completed'].includes(row.status) && !row.feedback ? links(row, siteUrl).feedback_url : null,
@@ -373,7 +399,7 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
         else entries.hospital_whatsapp = phone.slice(1);
       }
       if (body.templates !== undefined) {
-        const required = { request: ['ref'], confirmation: ['zoom_link'], link_reminder: ['zoom_link'], feedback: ['feedback_link'], rejection: [] };
+        const required = { request: ['ref'], confirmation: ['zoom_link'], link_reminder: ['zoom_link'], feedback: ['feedback_link'], rejection: [], reschedule: ['date', 'time'], cancellation: [] };
         const templates = {};
         for (const key of TEMPLATE_KEYS) {
           const value = body.templates?.[key];
@@ -392,6 +418,215 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
       await store.putSettings(entries, staff.user_id);
       await realtime.ping('settings');
       return { settings: await settings() };
+    },
+
+    // ----- Calendar control -----
+
+    // Month or week view: every clinic slot, bookings and time off.
+    async calendar(fromKey, dayCount, siteUrl) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fromKey ?? '')) throw new HttpError(400, 'Pick a start date.');
+      const days = Math.min(62, Math.max(1, Number(dayCount) || 7));
+      const doc = await doctor();
+      const start = istMidnightOf(fromKey);
+      const fromIso = new Date(start).toISOString();
+      const toIso = new Date(start + days * DAY).toISOString();
+      const [rules, rows, timeOff, current] = await Promise.all([
+        store.listRules(doc.id), store.listConsultationsBetween(doc.id, fromIso, toIso), store.listTimeOff(doc.id, fromIso, toIso), settings(),
+      ]);
+      const consultations = [];
+      for (const row of rows) consultations.push(await present(row, doc, siteUrl, current.templates));
+      return {
+        from: fromKey,
+        // Patients can book from today up to and including this date.
+        lastBookable: istDateKey(now() + (BOOKING_DAYS - 1) * DAY),
+        days: calendarDays(rules, rows, timeOff, fromKey, days, now()),
+        rules: rules.map(({ weekday, start_minute, end_minute, slot_minutes }) => ({ weekday, start_minute, end_minute, slot_minutes })),
+        timeOff: timeOff.map(({ id, starts_at, ends_at, reason }) => ({ id, starts_at, ends_at, reason })),
+        consultations,
+      };
+    },
+
+    async saveHours({ rules }, staff) {
+      if (!Array.isArray(rules) || rules.length > 21) throw new HttpError(400, 'Clinic hours are not valid.');
+      const clean = [];
+      for (const rule of rules) {
+        const weekday = Number(rule?.weekday);
+        const startMinute = Number(rule?.start_minute);
+        const endMinute = Number(rule?.end_minute);
+        const slotMinutes = Number(rule?.slot_minutes);
+        const valid = Number.isInteger(weekday) && weekday >= 0 && weekday <= 6
+          && [startMinute, endMinute].every((value) => Number.isInteger(value) && value >= 0 && value <= 1440 && value % 5 === 0)
+          && [10, 15, 20, 30, 45, 60].includes(slotMinutes) && endMinute - startMinute >= slotMinutes;
+        if (!valid) throw new HttpError(400, 'Each session needs a start, an end after it, and room for at least one consultation.');
+        clean.push({ weekday, start_minute: startMinute, end_minute: endMinute, slot_minutes: slotMinutes });
+      }
+      for (const rule of clean) {
+        const clash = clean.some((other) => other !== rule && other.weekday === rule.weekday && other.start_minute < rule.end_minute && rule.start_minute < other.end_minute);
+        if (clash) throw new HttpError(400, 'Two sessions on the same day overlap.');
+      }
+      const doc = await doctor();
+      await store.replaceRules(doc.id, clean);
+      await realtime.ping('hours');
+      return { rules: clean };
+    },
+
+    async addTimeOff({ start, end, reason }, staff, siteUrl) {
+      const startMs = Date.parse(start);
+      const endMs = Date.parse(end);
+      if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) throw new HttpError(400, 'The end must be after the start.');
+      if (endMs <= now()) throw new HttpError(400, 'This time has already passed.');
+      if (endMs - startMs > 120 * DAY) throw new HttpError(400, 'Time off can be at most 120 days at a time.');
+      const note = typeof reason === 'string' ? reason.trim().slice(0, 200) : '';
+      const doc = await doctor();
+      const row = await store.addTimeOff(doc.id, new Date(startMs).toISOString(), new Date(endMs).toISOString(), note, staff.user_id);
+      // Bookings already in this time are not moved automatically; the doctor decides.
+      const [rows, current] = await Promise.all([store.listConsultationsBetween(doc.id, row.starts_at, row.ends_at), settings()]);
+      const affected = [];
+      for (const item of rows.filter((entry) => ACTIVE.includes(entry.status))) affected.push(await present(item, doc, siteUrl, current.templates));
+      await realtime.ping('time-off');
+      return { timeOff: { id: row.id, starts_at: row.starts_at, ends_at: row.ends_at, reason: row.reason }, affected };
+    },
+
+    // Stop or allow all bookings for one date. Stopping adds whole-day time off;
+    // allowing removes any time off on that date, keeping the parts of longer
+    // time off that fall on other dates.
+    async setDayOpen({ date, open, reason }, staff, siteUrl) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? '')) throw new HttpError(400, 'Pick a date.');
+      const dayStart = istMidnightOf(date);
+      const dayEnd = dayStart + DAY;
+      if (dayEnd <= now()) throw new HttpError(400, 'This date has already passed.');
+      const doc = await doctor();
+      const startIso = new Date(dayStart).toISOString();
+      const endIso = new Date(dayEnd).toISOString();
+      const existing = await store.listTimeOff(doc.id, startIso, endIso);
+      if (open === false) {
+        const covered = existing.some((item) => Date.parse(item.starts_at) <= dayStart && Date.parse(item.ends_at) >= dayEnd);
+        if (!covered) {
+          const note = typeof reason === 'string' && reason.trim() ? reason.trim().slice(0, 200) : 'Bookings stopped by the doctor';
+          await store.addTimeOff(doc.id, startIso, endIso, note, staff.user_id);
+        }
+        const [rows, current] = await Promise.all([store.listConsultationsBetween(doc.id, startIso, endIso), settings()]);
+        const affected = [];
+        for (const item of rows.filter((entry) => ACTIVE.includes(entry.status))) affected.push(await present(item, doc, siteUrl, current.templates));
+        await realtime.ping('day-closed');
+        return { date, open: false, affected };
+      }
+      if (open !== true) throw new HttpError(400, 'Say whether to stop or allow bookings.');
+      for (const item of existing) {
+        await store.removeTimeOff(item.id);
+        if (Date.parse(item.starts_at) < dayStart) await store.addTimeOff(doc.id, item.starts_at, startIso, item.reason ?? '', staff.user_id);
+        if (Date.parse(item.ends_at) > dayEnd) await store.addTimeOff(doc.id, endIso, item.ends_at, item.reason ?? '', staff.user_id);
+      }
+      await realtime.ping('day-opened');
+      return { date, open: true, affected: [] };
+    },
+
+    async removeTimeOff({ id }) {
+      if (typeof id !== 'string' || !(await store.removeTimeOff(id))) throw new HttpError(404, 'This time off was already removed.');
+      await realtime.ping('time-off');
+      return { removed: true };
+    },
+
+    async reschedule({ id, start, reason }, staff, siteUrl) {
+      const note = cleanReason(reason, { required: false }) || 'A change in the doctor’s schedule.';
+      const row = typeof id === 'string' ? await store.getConsultation(id) : null;
+      if (!row) throw new HttpError(404, 'Consultation not found.');
+      if (!ACTIVE.includes(row.status)) throw new HttpError(409, `This consultation is already ${STATUS_LABELS[row.status].toLowerCase()}.`);
+      const doc = await store.getDoctorById(row.doctor_id);
+      const { days } = await service.slots();
+      const slot = typeof start === 'string' ? findSlot(days, new Date(start).toISOString()) : null;
+      if (!slot) throw new HttpError(409, 'This time is not free. Please pick another one.', { code: 'slot_taken' });
+      let meeting = null;
+      if (row.status === 'scheduled' && row.meeting_id) {
+        try {
+          meeting = await zoom.createMeeting({ topic: `Video consultation ${row.ref_code}`, startsAt: slot.start, minutes: Math.round((Date.parse(slot.end) - Date.parse(slot.start)) / 60000), zoomUser: doc?.zoom_user });
+        } catch (error) {
+          console.error('Zoom meeting failed', error.message);
+          throw new HttpError(502, 'Zoom did not create the new meeting. Nothing was changed; please try again.');
+        }
+      }
+      const patch = {
+        confirmation_sent_at: null,
+        link_reminder_sent_at: null,
+        ...(meeting ? { meeting_provider: meeting.provider, meeting_id: meeting.meetingId, join_url: meeting.joinUrl, meeting_passcode: meeting.passcode } : {}),
+      };
+      let updated;
+      try {
+        updated = await store.reschedule(row.id, slot.start, slot.end, patch, { ...actorOf(staff), note: `Moved from ${formatDate(row.starts_at)}, ${formatTime(row.starts_at)} to ${formatDate(slot.start)}, ${formatTime(slot.start)}` });
+      } catch (error) {
+        if (meeting) await zoom.deleteMeeting(meeting.meetingId).catch(() => {});
+        throw conflict(error);
+      }
+      if (!updated) {
+        if (meeting) await zoom.deleteMeeting(meeting.meetingId).catch(() => {});
+        throw new HttpError(409, 'This consultation was changed in another window.');
+      }
+      if (meeting) await zoom.deleteMeeting(row.meeting_id).catch(() => {});
+      const current = await settings();
+      const fresh = await store.getConsultation(row.id);
+      const consultation = await present(fresh, doc, siteUrl, current.templates);
+      const message = await prepare('reschedule', fresh, doc, siteUrl, current.templates, {
+        reason: note,
+        zoom_link: fresh.join_url ?? 'You will receive it after the doctor confirms.',
+      });
+      await realtime.ping('rescheduled');
+      return { consultation, message };
+    },
+
+    async cancel({ id, reason }, staff, siteUrl) {
+      const note = cleanReason(reason);
+      const row = typeof id === 'string' ? await store.getConsultation(id) : null;
+      if (!row) throw new HttpError(404, 'Consultation not found.');
+      if (!ACTIVE.includes(row.status)) throw new HttpError(409, `This consultation is already ${STATUS_LABELS[row.status].toLowerCase()}.`);
+      const updated = await store.transition(row.id, row.status, 'cancelled', { reject_reason: note }, { ...actorOf(staff), note: 'Cancelled by the hospital' });
+      if (!updated) throw new HttpError(409, 'This consultation was changed in another window.');
+      if (row.meeting_id) await zoom.deleteMeeting(row.meeting_id).catch(() => {});
+      const [doc, current] = await Promise.all([store.getDoctorById(row.doctor_id), settings()]);
+      const consultation = await present({ ...updated, feedback: null }, doc, siteUrl, current.templates);
+      await realtime.ping('cancelled');
+      return { consultation, message: consultation.messages.cancellation };
+    },
+
+    // A booking the hospital makes for a patient who phoned in. It is
+    // confirmed straight away, with its Zoom meeting.
+    async staffBook({ name, phone, start }, staff, siteUrl) {
+      const fields = {};
+      const patientName = cleanName(name);
+      const patientPhone = normalizeIndianMobile(String(phone ?? ''));
+      if (!patientName) fields.name = 'Enter the patient’s full name (letters only).';
+      if (!patientPhone) fields.phone = 'Enter a 10-digit Indian mobile number.';
+      if (Object.keys(fields).length) throw new HttpError(400, 'Please check the highlighted details.', fields);
+      const doc = await doctor();
+      const { days } = await service.slots();
+      const slot = typeof start === 'string' ? findSlot(days, new Date(start).toISOString()) : null;
+      if (!slot) throw new HttpError(409, 'This time is not free. Please pick another one.', { code: 'slot_taken' });
+      const token = newHoldToken();
+      let id;
+      try {
+        await store.holdSlot(doc.id, slot.start, slot.end, hashToken(token), 60);
+        for (let attempt = 0; attempt < 5 && !id; attempt += 1) {
+          try {
+            id = await store.createRequestFromHold(hashToken(token), newRefCode(), patientName, patientPhone, new Date(now()).toISOString());
+          } catch (error) {
+            if (!(error instanceof StoreConflict && error.code === 'ref_taken')) throw error;
+          }
+        }
+      } catch (error) {
+        throw conflict(error);
+      }
+      if (!id) throw new Error('Could not create a unique reference.');
+      await store.addEvent(id, { ...actorOf(staff), note: 'Booked by the hospital for a phone request' });
+      return service.accept({ id }, staff, siteUrl);
+    },
+
+    async search(query, siteUrl) {
+      const text = String(query ?? '').trim();
+      if (text.length < 2 || text.length > 60) throw new HttpError(400, 'Type at least 2 characters.');
+      const [doc, current] = await Promise.all([doctor(), settings()]);
+      const rows = await store.search(text);
+      const results = [];
+      for (const row of rows) results.push(await present(row, doc, siteUrl, current.templates));
+      return { results };
     },
   };
   return service;

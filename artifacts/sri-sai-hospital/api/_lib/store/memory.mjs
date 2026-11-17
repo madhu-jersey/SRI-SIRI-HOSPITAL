@@ -27,6 +27,7 @@ export function createMemoryStore({ now = () => Date.now(), demoPassword = 'demo
   const settings = new Map();
   const rateLimits = new Map();
   const sessions = new Map();
+  const timeOff = [];
   const demoUser = { id: randomUUID(), email: 'doctor@demo.local' };
   const staff = { user_id: demoUser.id, doctor_id: doctor.id, role: 'doctor', display_name: 'Dr. Sritha' };
 
@@ -184,6 +185,51 @@ export function createMemoryStore({ now = () => Date.now(), demoPassword = 'demo
     },
     async sweepLegacy() {
       return 0;
+    },
+
+    // ----- Calendar control -----
+    async replaceRules(doctorId, nextRules) {
+      for (let index = rules.length - 1; index >= 0; index -= 1) if (rules[index].doctor_id === doctorId) rules.splice(index, 1);
+      for (const rule of nextRules) rules.push({ doctor_id: doctorId, ...rule });
+      return nextRules.length;
+    },
+    async listTimeOff(doctorId, fromIso, toIso) {
+      return clone(timeOff.filter((item) => item.doctor_id === doctorId && overlaps(item.starts_at, item.ends_at, fromIso, toIso)).sort((a, b) => a.starts_at.localeCompare(b.starts_at)));
+    },
+    async addTimeOff(doctorId, startsAt, endsAt, reason, userId) {
+      const row = { id: randomUUID(), doctor_id: doctorId, starts_at: startsAt, ends_at: endsAt, reason, created_by: userId, created_at: iso() };
+      timeOff.push(row);
+      return clone(row);
+    },
+    async removeTimeOff(id) {
+      const index = timeOff.findIndex((item) => item.id === id);
+      if (index >= 0) timeOff.splice(index, 1);
+      return index >= 0;
+    },
+    async listConsultationsBetween(doctorId, fromIso, toIso) {
+      return [...consultations.values()]
+        .filter((row) => row.doctor_id === doctorId && overlaps(row.starts_at, row.ends_at, fromIso, toIso))
+        .sort((a, b) => a.starts_at.localeCompare(b.starts_at))
+        .map((row) => ({ ...clone(row), feedback: clone(feedback.get(row.id) ?? null) }));
+    },
+    async search(text) {
+      const needle = text.toLowerCase();
+      const digits = text.replace(/\D/g, '');
+      return [...consultations.values()]
+        .filter((row) => row.patient_name.toLowerCase().includes(needle) || row.ref_code.toLowerCase().includes(needle) || (digits.length >= 4 && row.patient_phone.includes(digits)))
+        .sort((a, b) => b.starts_at.localeCompare(a.starts_at))
+        .slice(0, 50)
+        .map((row) => ({ ...clone(row), feedback: clone(feedback.get(row.id) ?? null) }));
+    },
+    // Moves an active consultation to a new time if nothing else is there.
+    async reschedule(id, startsAt, endsAt, patch, event) {
+      const row = consultations.get(id);
+      if (!row || !ACTIVE.includes(row.status)) return null;
+      const clash = [...consultations.values()].some((other) => other.id !== id && other.doctor_id === row.doctor_id && ACTIVE.includes(other.status) && overlaps(other.starts_at, other.ends_at, startsAt, endsAt));
+      if (clash) throw new StoreConflict('slot_taken');
+      Object.assign(row, patch, { starts_at: startsAt, ends_at: endsAt, updated_at: iso() });
+      addEvent(id, null, null, event.actor, event.note, event.actorId);
+      return clone(row);
     },
 
     // Demo sign-in, only for the local in-memory store.

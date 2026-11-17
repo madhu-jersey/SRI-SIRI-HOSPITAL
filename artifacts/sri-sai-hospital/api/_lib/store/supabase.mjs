@@ -160,6 +160,48 @@ export function createSupabaseStore(config) {
       return data;
     },
 
+    // ----- Calendar control -----
+    async replaceRules(doctorId, rules) {
+      const { data, error } = await db.rpc('replace_availability', { p_doctor: doctorId, p_rules: rules });
+      if (error) fail(error, 'clinic hours');
+      return data;
+    },
+    async listTimeOff(doctorId, fromIso, toIso) {
+      const { data, error } = await db.from('time_off').select('id, starts_at, ends_at, reason, created_at').eq('doctor_id', doctorId).lt('starts_at', toIso).gt('ends_at', fromIso).order('starts_at');
+      if (error) fail(error, 'time off');
+      return data;
+    },
+    async addTimeOff(doctorId, startsAt, endsAt, reason, userId) {
+      const { data, error } = await db.from('time_off').insert({ doctor_id: doctorId, starts_at: startsAt, ends_at: endsAt, reason, created_by: userId }).select('id, starts_at, ends_at, reason, created_at').single();
+      if (error) fail(error, 'add time off');
+      return data;
+    },
+    async removeTimeOff(id) {
+      const { data, error } = await db.from('time_off').delete().eq('id', id).select('id');
+      if (error) fail(error, 'remove time off');
+      return data.length > 0;
+    },
+    async listConsultationsBetween(doctorId, fromIso, toIso) {
+      const { data, error } = await db.from('consultations').select(`${CONSULTATION_COLUMNS}, feedback(rating, comment, allow_public, created_at)`).eq('doctor_id', doctorId).lt('starts_at', toIso).gt('ends_at', fromIso).order('starts_at').limit(500);
+      if (error) fail(error, 'calendar');
+      return data.map(flattenFeedback);
+    },
+    async search(text) {
+      const safe = text.replace(/[%_,()."\\]/g, ' ').trim();
+      const digits = text.replace(/\D/g, '');
+      const filters = [`patient_name.ilike.%${safe}%`, `ref_code.ilike.%${safe}%`];
+      if (digits.length >= 4) filters.push(`patient_phone.like.%${digits}%`);
+      const { data, error } = await db.from('consultations').select(`${CONSULTATION_COLUMNS}, feedback(rating, comment, allow_public, created_at)`).or(filters.join(',')).order('starts_at', { ascending: false }).limit(50);
+      if (error) fail(error, 'search');
+      return data.map(flattenFeedback);
+    },
+    async reschedule(id, startsAt, endsAt, patch, event) {
+      const { data, error } = await db.from('consultations').update({ ...patch, starts_at: startsAt, ends_at: endsAt }).eq('id', id).in('status', ACTIVE).select(CONSULTATION_COLUMNS).maybeSingle();
+      if (error) fail(error, 'reschedule');
+      if (data) await insertEvent(id, null, null, event);
+      return data;
+    },
+
     async getUserFromToken(token) {
       const { data, error } = await db.auth.getUser(token);
       if (error || !data?.user) return null;

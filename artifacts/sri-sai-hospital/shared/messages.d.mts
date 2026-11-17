@@ -1,4 +1,4 @@
-export type TemplateKey = 'request' | 'confirmation' | 'rejection' | 'link_reminder' | 'feedback';
+export type TemplateKey = 'request' | 'confirmation' | 'rejection' | 'link_reminder' | 'feedback' | 'reschedule' | 'cancellation';
 export type Templates = Record<TemplateKey, string>;
 
 export declare const TIME_ZONE: string;

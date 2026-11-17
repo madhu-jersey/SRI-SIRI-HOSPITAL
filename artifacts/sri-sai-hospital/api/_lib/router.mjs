@@ -53,6 +53,15 @@ export function createRouter({ config, store, service }) {
     'POST consultations/start-link': async ({ request }) => { await requireStaff(request); return service.startLink(await readJson(request)); },
     'GET consultations/events': async ({ request, query }) => { await requireStaff(request); return service.events(query.get('id')); },
     'PUT settings': async ({ request }) => { const staff = await requireStaff(request); return service.saveSettings(await readJson(request), staff); },
+    'GET calendar': async ({ request, query, site }) => { await requireStaff(request); return service.calendar(query.get('from'), query.get('days'), site); },
+    'PUT hours': async ({ request }) => { const staff = await requireStaff(request); return service.saveHours(await readJson(request), staff); },
+    'POST time-off': async ({ request, site }) => { const staff = await requireStaff(request); return service.addTimeOff(await readJson(request), staff, site); },
+    'POST days/set': async ({ request, site }) => { const staff = await requireStaff(request); return service.setDayOpen(await readJson(request), staff, site); },
+    'POST time-off/remove': async ({ request }) => { await requireStaff(request); return service.removeTimeOff(await readJson(request)); },
+    'POST consultations/reschedule': async ({ request, site }) => { const staff = await requireStaff(request); return service.reschedule(await readJson(request), staff, site); },
+    'POST consultations/cancel': async ({ request, site }) => { const staff = await requireStaff(request); return service.cancel(await readJson(request), staff, site); },
+    'POST consultations/book': async ({ request, site }) => { const staff = await requireStaff(request); return service.staffBook(await readJson(request), staff, site); },
+    'GET consultations/search': async ({ request, query, site }) => { await requireStaff(request); return service.search(query.get('q'), site); },
   };
 
   return async function handle(request, response) {
