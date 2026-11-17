@@ -112,6 +112,10 @@
 .dash-banner svg { flex:none; color:var(--d-muted); }
 .dash-banner.is-warn { border-color:#F1D9A6; background:var(--d-amber-tint); color:#6B4A00; cursor:pointer; }
 .dash-banner.is-warn svg { color:var(--d-amber); }
+.dash-banner.is-push { flex-wrap:wrap; border-color:#BFE0D3; background:#F1F9F5; color:#123B2F; }
+.dash-banner.is-push > span { flex:1 1 320px; }
+.dash-banner.is-push svg { color:var(--d-green); }
+.dash-banner.is-push .dash-button svg { color:inherit; }
 .dash-banner.is-error { border-color:#F0C5BF; background:var(--d-red-tint); color:var(--d-red); }
 
 /* ---------- Panels ---------- */

@@ -25,6 +25,11 @@ export function readConfig(env = process.env) {
     hospitalWhatsapp: hospitalPhone ? hospitalPhone.slice(1) : '',
     supabaseUrl: env.SUPABASE_URL || '',
     supabaseSecretKey: env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '',
+    vapid: Object.freeze({
+      publicKey: env.VAPID_PUBLIC_KEY || '',
+      privateKey: env.VAPID_PRIVATE_KEY || '',
+      subject: env.VAPID_SUBJECT || 'https://sri-siri-hospital-5nct-pink.vercel.app',
+    }),
     zoom: Object.freeze({
       accountId: env.ZOOM_ACCOUNT_ID || '',
       clientId: env.ZOOM_CLIENT_ID || '',

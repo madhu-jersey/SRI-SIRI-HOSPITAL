@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import {
   DEFAULT_TEMPLATES, TEMPLATE_KEYS, formatDate, formatIndianPhone, formatTime, messageValues, normalizeIndianMobile, renderTemplate, waLink,
 } from '../../shared/messages.mjs';
@@ -44,7 +44,7 @@ function conflict(error) {
 }
 
 // Everything the routes need, built once per process.
-export function createService({ config, store, zoom, messaging, realtime, now = () => Date.now() }) {
+export function createService({ config, store, zoom, messaging, realtime, push = { enabled: false, publicKey: '', async send() { return { ok: false }; } }, now = () => Date.now() }) {
   let doctorCache = null;
 
   async function doctor() {
@@ -126,6 +126,23 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
     };
   }
 
+  // Notifies every signed-up device (doctor and staff phones or computers).
+  // A failure here never stops a booking.
+  async function notifyStaff(payload, onlyUser) {
+    if (!push.enabled) return 0;
+    try {
+      const devices = (await store.listPushDevices()).filter((device) => !onlyUser || device.user_id === onlyUser);
+      const results = await Promise.all(devices.map(async (device) => ({ device, result: await push.send(device.subscription, payload) })));
+      for (const { device, result } of results) if (result.gone) await store.removePushDevice(device.key);
+      return results.filter(({ result }) => result.ok).length;
+    } catch (error) {
+      console.error('Notifications failed', error.message);
+      return 0;
+    }
+  }
+
+  const deviceKey = (endpoint) => `push:${createHash('sha256').update(endpoint).digest('base64url').slice(0, 24)}`;
+
   async function housekeeping() {
     await store.expireStale();
     await store.completePast();
@@ -142,6 +159,7 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
         hospitalWhatsappDisplay: current.hospitalWhatsappDisplay,
         holdMinutes: HOLD_SECONDS / 60,
         bookingDays: BOOKING_DAYS,
+        pushPublicKey: push.publicKey,
         hours: rules.map(({ weekday, start_minute, end_minute }) => ({ weekday, start_minute, end_minute })),
         auth: store.kind === 'memory' ? 'demo' : 'supabase',
         doctor: { name: doc.display_name, qualification: doc.qualification, registration: doc.registration_no, minutes: doc.consult_minutes },
@@ -220,6 +238,12 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
       if (!current.hospitalWhatsapp) throw new Error('HOSPITAL_WHATSAPP is not set.');
       const text = renderTemplate(current.templates.request, messageValues(row));
       await realtime.ping('requested');
+      await notifyStaff({
+        title: 'New consultation request',
+        body: `${row.patient_name} · ${formatDate(row.starts_at)}, ${formatTime(row.starts_at)} · ${ref}`,
+        url: '/dashboard',
+        tag: `request-${ref}`,
+      });
       return {
         ref,
         startsAt: row.starts_at,
@@ -426,6 +450,35 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
       await store.putSettings(entries, staff.user_id);
       await realtime.ping('settings');
       return { settings: await settings() };
+    },
+
+    // ----- Notifications -----
+
+    async subscribePush({ subscription, label }, staff) {
+      const endpoint = subscription?.endpoint;
+      const keys = subscription?.keys;
+      if (typeof endpoint !== 'string' || !endpoint.startsWith('https://') || endpoint.length > 1000 || typeof keys?.p256dh !== 'string' || typeof keys?.auth !== 'string') {
+        throw new HttpError(400, 'This browser did not give a valid notification address.');
+      }
+      if (!push.enabled) throw new HttpError(503, 'Notifications are not set up on the server yet.');
+      await store.savePushDevice(deviceKey(endpoint), {
+        subscription: { endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } },
+        user_id: staff.user_id,
+        label: typeof label === 'string' ? label.slice(0, 80) : 'Device',
+        created_at: new Date(now()).toISOString(),
+      }, staff.user_id);
+      return { subscribed: true };
+    },
+
+    async unsubscribePush({ endpoint }) {
+      if (typeof endpoint === 'string') await store.removePushDevice(deviceKey(endpoint));
+      return { unsubscribed: true };
+    },
+
+    async testPush(staff) {
+      const sent = await notifyStaff({ title: 'Notifications are on', body: 'You will be told here when a patient books, even when the app is closed.', url: '/dashboard', tag: 'test' }, staff.user_id);
+      if (!sent) throw new HttpError(409, 'No device of yours is signed up for notifications yet.');
+      return { sent };
     },
 
     // ----- Calendar control -----

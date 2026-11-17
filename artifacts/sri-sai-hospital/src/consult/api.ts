@@ -47,6 +47,7 @@ export type PublicConfig = {
   holdMinutes: number;
   auth: 'demo' | 'supabase';
   bookingDays: number;
+  pushPublicKey: string;
   hours: Array<{ weekday: number; start_minute: number; end_minute: number }>;
   doctor: { name: string; qualification: string; registration: string; minutes: number };
 };

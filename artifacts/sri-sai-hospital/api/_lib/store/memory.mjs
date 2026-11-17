@@ -28,6 +28,7 @@ export function createMemoryStore({ now = () => Date.now(), demoPassword = 'demo
   const rateLimits = new Map();
   const sessions = new Map();
   const timeOff = [];
+  const pushDevices = new Map();
   const demoUser = { id: randomUUID(), email: 'doctor@demo.local' };
   const staff = { user_id: demoUser.id, doctor_id: doctor.id, role: 'doctor', display_name: 'Dr. Sritha' };
 
@@ -142,6 +143,16 @@ export function createMemoryStore({ now = () => Date.now(), demoPassword = 'demo
     },
     async addEvent(id, event) {
       addEvent(id, null, null, event.actor, event.note, event.actorId);
+    },
+    // Devices that get notifications (web push subscriptions).
+    async savePushDevice(key, value) {
+      pushDevices.set(key, clone(value));
+    },
+    async listPushDevices() {
+      return [...pushDevices].map(([key, value]) => ({ key, ...clone(value) }));
+    },
+    async removePushDevice(key) {
+      pushDevices.delete(key);
     },
     async getSettings() {
       return Object.fromEntries([...settings].map(([key, row]) => [key, clone(row.value)]));

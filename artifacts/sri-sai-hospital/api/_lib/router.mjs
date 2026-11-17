@@ -42,6 +42,9 @@ export function createRouter({ config, store, service }) {
       if (!token) throw new HttpError(401, 'Email or password is wrong.');
       return { accessToken: token };
     },
+    'POST push/subscribe': async ({ request }) => { const staff = await requireStaff(request); return service.subscribePush(await readJson(request), staff); },
+    'POST push/unsubscribe': async ({ request }) => { await requireStaff(request); return service.unsubscribePush(await readJson(request)); },
+    'POST push/test': async ({ request }) => { const staff = await requireStaff(request); return service.testPush(staff); },
     'GET me': async ({ request }) => {
       const staff = await requireStaff(request);
       return { name: staff.display_name, role: staff.role, email: staff.email };

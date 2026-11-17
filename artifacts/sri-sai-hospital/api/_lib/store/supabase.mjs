@@ -119,8 +119,23 @@ export function createSupabaseStore(config) {
     async addEvent(id, event) {
       await insertEvent(id, null, null, event);
     },
+    // Devices that get notifications are kept as settings rows named push:<id>,
+    // so no extra table is needed.
+    async savePushDevice(key, value, userId) {
+      const { error } = await db.from('settings').upsert({ key, value, updated_by: userId ?? null, updated_at: new Date().toISOString() });
+      if (error) fail(error, 'save device');
+    },
+    async listPushDevices() {
+      const { data, error } = await db.from('settings').select('key, value').like('key', 'push:%');
+      if (error) fail(error, 'devices');
+      return data.map((row) => ({ key: row.key, ...row.value }));
+    },
+    async removePushDevice(key) {
+      const { error } = await db.from('settings').delete().eq('key', key);
+      if (error) fail(error, 'remove device');
+    },
     async getSettings() {
-      const { data, error } = await db.from('settings').select('key, value');
+      const { data, error } = await db.from('settings').select('key, value').not('key', 'like', 'push:%');
       if (error) fail(error, 'settings');
       return Object.fromEntries(data.map((row) => [row.key, row.value]));
     },

@@ -82,6 +82,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.117.3"
+    "@supabase/supabase-js": "2.117.3",
+    "web-push": "3.6.7"
   }
 }

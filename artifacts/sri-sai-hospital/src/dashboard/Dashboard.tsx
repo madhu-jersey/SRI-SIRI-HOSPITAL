@@ -1,6 +1,6 @@
 import { type FormEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  BellRing, CalendarClock, CalendarDays, CalendarRange, CalendarX2, Check, ChevronRight, CircleAlert, History, Inbox, LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Printer, RefreshCw, Search, Settings, Star, UserPlus, Video, Volume2, VolumeX, X,
+  BellOff, BellRing, CalendarClock, CalendarDays, CalendarRange, CalendarX2, Check, ChevronRight, CircleAlert, History, Inbox, LayoutDashboard, LoaderCircle, LockKeyhole, LogOut, Printer, RefreshCw, Search, Settings, Smartphone, Star, UserPlus, Video, Volume2, VolumeX, X,
 } from 'lucide-react';
 import {
   DEFAULT_TEMPLATES, TEMPLATE_FIELDS, TEMPLATE_KEYS, type TemplateKey, type Templates, formatDate, formatIndianPhone, formatTime, renderTemplate,
@@ -9,6 +9,7 @@ import { OVERDUE_AFTER_MINUTES, REMINDER_KINDS, type DueReminder, remindersDue }
 import { ApiError, api, type PublicConfig } from '../consult/api';
 import { type AuthMode, currentToken, signIn, signOut, staffApi, subscribeToChanges, supabaseConfigured } from './session';
 import { playSound, soundLocked, unlockSound } from './sound';
+import { type PushState, disablePush, enablePush, pushState, setUpDashboardApp, syncPush, testPush } from './push';
 import './dashboard.css';
 import './calendar.css';
 import { type Consultation, type Message, MessagePreview, Modal, SendDialog, WhatsAppGlyph } from './ui';
@@ -44,6 +45,7 @@ export default function Dashboard() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
+    setUpDashboardApp();
     api<PublicConfig>('config')
       .then(async (value) => {
         setConfig(value);
@@ -55,7 +57,7 @@ export default function Dashboard() {
   if (error) return <main className="dash-center"><div className="dash-panel dash-center-card"><p className="dash-error">{error}</p></div></main>;
   if (!config || signedIn === null) return <main className="dash-center" aria-busy="true"><LoaderCircle className="dash-spin" size={28} aria-label="Loading" /></main>;
   if (!signedIn) return <Login mode={config.auth} onSignedIn={() => setSignedIn(true)} />;
-  return <DashboardApp mode={config.auth} onSignedOut={() => setSignedIn(false)} />;
+  return <DashboardApp mode={config.auth} pushKey={config.pushPublicKey ?? ''} onSignedOut={() => setSignedIn(false)} />;
 }
 
 function Login({ mode, onSignedIn }: { mode: AuthMode; onSignedIn: () => void }) {
@@ -123,7 +125,9 @@ function Brand({ light = false }: { light?: boolean }) {
   );
 }
 
-function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () => void }) {
+function DashboardApp({ mode, pushKey, onSignedOut }: { mode: AuthMode; pushKey: string; onSignedOut: () => void }) {
+  const [push, setPush] = useState<PushState>('checking');
+  const [pushBusy, setPushBusy] = useState(false);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loadError, setLoadError] = useState('');
   const [now, setNow] = useState(() => Date.now());
@@ -280,6 +284,44 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
     }
   }
 
+  async function turnOnPush() {
+    setPushBusy(true);
+    try {
+      await enablePush(mode, pushKey);
+      setPush('on');
+      await testPush(mode).catch(() => {});
+      toast('Notifications are on. A test notification was sent to this device.');
+    } catch (reason) {
+      toast((reason as Error).message, 'error');
+      setPush(await pushState().catch(() => 'off' as PushState));
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function turnOffPush() {
+    setPushBusy(true);
+    try {
+      await disablePush(mode);
+      setPush('off');
+      toast('Notifications turned off on this device.');
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function sendTestPush() {
+    setPushBusy(true);
+    try {
+      await testPush(mode);
+      toast('Test notification sent to your devices.');
+    } catch (reason) {
+      handleError(reason);
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
   async function logout() {
     await signOut(mode);
     onSignedOut();
@@ -287,6 +329,12 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
 
   const [view, setView] = useState<View>('overview');
   const [me, setMe] = useState<{ name: string; email: string } | null>(null);
+  useEffect(() => {
+    pushState().then((state) => {
+      setPush(state);
+      if (state === 'on') syncPush(mode);
+    }).catch(() => setPush('unsupported'));
+  }, [mode]);
   useEffect(() => {
     staffApi<{ name: string; email: string }>(mode, 'me').then(setMe).catch(() => {});
   }, [mode]);
@@ -367,6 +415,7 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
             <span className="dash-avatar is-light" aria-hidden="true">{initials(me?.name ?? data.doctor.name)}</span>
             <span><strong>{me?.name ?? data.doctor.name}</strong><small>{me?.email ?? 'Signed in'}</small></span>
           </div>
+          {push === 'on' && <button className="dash-side-signout" type="button" onClick={turnOffPush} disabled={pushBusy}><BellOff size={17} aria-hidden="true" /> Notifications off here</button>}
           <button className="dash-side-signout" type="button" onClick={logout}><LogOut size={17} aria-hidden="true" /> Sign out</button>
         </div>
       </aside>
@@ -387,6 +436,11 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
             <span className={`dash-live${loadError ? ' is-off' : ''}`} title={live ? 'Updates arrive instantly' : 'Checks for updates every few seconds'}>
               <i aria-hidden="true" /> {loadError ? 'Offline' : live ? 'Live' : 'Auto-refresh'}
             </span>
+            {push === 'on' && (
+              <button className="dash-button dash-sound" type="button" onClick={sendTestPush} disabled={pushBusy} title="Send a test notification to this device">
+                <BellRing size={17} aria-hidden="true" /><span>Notifications on</span>
+              </button>
+            )}
             <button className={`dash-button dash-sound${soundOn ? '' : ' is-off'}`} type="button" onClick={toggleSound} aria-pressed={soundOn}>
               {soundOn ? <Volume2 size={17} aria-hidden="true" /> : <VolumeX size={17} aria-hidden="true" />}
               <span>{soundOn ? 'Sound on' : 'Sound off'}</span>
@@ -396,6 +450,18 @@ function DashboardApp({ mode, onSignedOut }: { mode: AuthMode; onSignedOut: () =
         </header>
 
         <main className="dash-main">
+          {(push === 'off' || push === 'needs-install' || push === 'blocked') && pushKey && (
+            <div className="dash-banner is-push" role="note">
+              <Smartphone size={18} aria-hidden="true" />
+              <span>
+                <strong>Get a notification when a patient books, even when this app is closed.</strong>{' '}
+                {push === 'needs-install' ? 'On iPhone: tap Share, then “Add to Home Screen”. Open “Consultations” from your home screen and turn notifications on there.'
+                  : push === 'blocked' ? 'Notifications are blocked for this site. Allow them in the browser’s site settings (the lock icon next to the address), then reload.'
+                  : 'Turn them on for this phone or computer.'}
+              </span>
+              {push === 'off' && <button className="dash-button dash-primary" type="button" onClick={turnOnPush} disabled={pushBusy}>{pushBusy ? <LoaderCircle className="dash-spin" size={16} aria-hidden="true" /> : <BellRing size={16} aria-hidden="true" />} Turn on notifications</button>}
+            </div>
+          )}
           {soundOn && locked && (
             <button className="dash-banner is-warn" type="button" onClick={enableSound}>
               <BellRing size={18} aria-hidden="true" /> <span><strong>Alert sounds are paused by the browser.</strong> Click here once to turn them on.</span>
