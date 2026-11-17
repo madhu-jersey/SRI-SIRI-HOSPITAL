@@ -91,7 +91,8 @@ test('reschedule moves the booking, makes a new Zoom meeting and prefills a mess
   const text = new URL(moved.body.message.url).searchParams.get('text');
   assert.ok(text.includes('moved to Wed, 18 Nov 2026 at 6:30 PM'));
   assert.ok(text.includes('Reason: Doctor called for an emergency'));
-  assert.ok(text.includes(moved.body.consultation.meeting.join_url));
+  assert.ok(!text.includes(moved.body.consultation.meeting.join_url));
+  assert.ok(text.includes('Zoom link on WhatsApp 30 minutes before'));
   // The old time is free again.
   assert.equal((await call('POST', 'holds', { body: { start: '2026-11-16T12:00:00.000Z' } })).status, 200);
 });
@@ -170,4 +171,15 @@ test('allowing one date keeps the rest of a longer time off', async () => {
   assert.deepEqual([free('2026-11-17'), free('2026-11-18'), free('2026-11-19')], [0, 6, 0]);
   const calendar = await call('GET', 'calendar?from=2026-11-16&days=7', { token });
   assert.deepEqual(calendar.body.timeOff.map((item) => item.reason), ['Leave', 'Leave']);
+});
+
+test('settings refuse a Zoom link in the confirmation or moved message', async () => {
+  const { call, token } = await setup();
+  const dash = await call('GET', 'dashboard', { token });
+  const templates = { ...dash.body.settings.templates, confirmation: 'Confirmed {date} {time}. Link: {zoom_link}' };
+  const saved = await call('PUT', 'settings', { token, body: { templates } });
+  assert.equal(saved.status, 400);
+  assert.match(saved.body.fields['templates.confirmation'], /30 minutes before/);
+  const okay = await call('PUT', 'settings', { token, body: { templates: dash.body.settings.templates } });
+  assert.equal(okay.status, 200);
 });

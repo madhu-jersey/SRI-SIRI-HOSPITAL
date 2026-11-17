@@ -480,13 +480,18 @@ export function TrackPage({ token }: { token: string }) {
 
             {data.status === 'requested' && (
               <div className="consult-track-note">
-                <p>Your request is with the hospital. When {data.doctor} confirms it, you will get the Zoom link on WhatsApp{data.hospitalWhatsappDisplay ? ` from ${data.hospitalWhatsappDisplay}` : ''}.</p>
+                <p>Your request is with the hospital. When {data.doctor} confirms it, you will get a confirmation on WhatsApp{data.hospitalWhatsappDisplay ? ` from ${data.hospitalWhatsappDisplay}` : ''}.</p>
                 <p>Did not send the WhatsApp message yet? Send your reference <strong>{data.ref}</strong> to the hospital.</p>
+              </div>
+            )}
+            {data.status === 'scheduled' && !data.joinUrl && Date.parse(data.endsAt) > now && (
+              <div className="consult-track-note">
+                <p>Your consultation is confirmed. The Zoom link will be sent to you on WhatsApp <strong>30 minutes before {data.time}</strong>, and the Join button will appear here at the same time.</p>
               </div>
             )}
             {data.status === 'scheduled' && data.joinUrl && (
               <div className="consult-track-note">
-                <p>{minutesToStart > 15 ? 'Please join a few minutes before your time. The doctor will let you in from the waiting room.' : 'You can join now. The doctor will let you in from the waiting room.'}</p>
+                <p>{minutesToStart > 0 ? `Open the link now and wait in the waiting room. The consultation opens at ${data.time}, when ${data.doctor} lets you in.` : `${data.doctor} will let you in from the waiting room.`}</p>
                 <a className="button button-primary consult-join" href={data.joinUrl} target="_blank" rel="noreferrer"><Video size={18} aria-hidden="true" /> Join on Zoom</a>
                 {data.passcode && <p className="consult-passcode">Meeting passcode: <strong>{data.passcode}</strong></p>}
               </div>

@@ -5,21 +5,21 @@ export const TIME_ZONE = 'Asia/Kolkata';
 
 export const TEMPLATE_FIELDS = Object.freeze({
   request: { label: 'Patient’s request to the hospital', placeholders: ['ref', 'name', 'date', 'time'] },
-  confirmation: { label: 'Confirmation to the patient', placeholders: ['name', 'doctor', 'date', 'time', 'ref', 'zoom_link', 'tracker_link'] },
+  confirmation: { label: 'Confirmation to the patient', placeholders: ['name', 'doctor', 'date', 'time', 'ref', 'tracker_link'] },
   rejection: { label: 'Rejection to the patient', placeholders: ['name', 'doctor', 'date', 'time', 'ref', 'reason', 'booking_link'] },
   link_reminder: { label: 'Zoom link, 30 minutes before', placeholders: ['name', 'doctor', 'date', 'time', 'ref', 'zoom_link', 'tracker_link'] },
   feedback: { label: 'Feedback request, after the consultation', placeholders: ['name', 'doctor', 'ref', 'feedback_link'] },
-  reschedule: { label: 'Consultation moved to a new time', placeholders: ['name', 'doctor', 'date', 'time', 'ref', 'zoom_link', 'tracker_link', 'reason'] },
+  reschedule: { label: 'Consultation moved to a new time', placeholders: ['name', 'doctor', 'date', 'time', 'ref', 'tracker_link', 'reason'] },
   cancellation: { label: 'Consultation cancelled', placeholders: ['name', 'doctor', 'date', 'time', 'ref', 'reason', 'booking_link'] },
 });
 
 export const DEFAULT_TEMPLATES = Object.freeze({
   request: 'Consultation request | Ref {ref} | {name} | {date}, {time}',
-  confirmation: 'Hello {name}, your video consultation with {doctor} is confirmed for {date} at {time} (Ref {ref}).\n\nZoom link: {zoom_link}\n\nYou can see your appointment here: {tracker_link}\n\nSri Siri Hospital, Tanuku',
+  confirmation: 'Hello {name}, your video consultation with {doctor} is confirmed for {date} at {time} (Ref {ref}).\n\nWe will send you the Zoom link on WhatsApp 30 minutes before your consultation. The doctor will let you in at {time}.\n\nYou can see your appointment here: {tracker_link}\n\nSri Siri Hospital, Tanuku',
   rejection: 'Hello {name}, we are sorry, but {doctor} cannot take your consultation request for {date} at {time} (Ref {ref}).\n\nReason: {reason}\n\nYou can choose another time here: {booking_link}\n\nSri Siri Hospital, Tanuku',
   link_reminder: 'Hello {name}, your video consultation with {doctor} starts at {time} today (Ref {ref}).\n\nJoin here: {zoom_link}\n\nSri Siri Hospital, Tanuku',
   feedback: 'Hello {name}, thank you for your consultation with {doctor} (Ref {ref}). Please tell us how it went: {feedback_link}\n\nSri Siri Hospital, Tanuku',
-  reschedule: 'Hello {name}, your video consultation with {doctor} has been moved to {date} at {time} (Ref {ref}).\n\nReason: {reason}\n\nZoom link: {zoom_link}\n\nYou can see your appointment here: {tracker_link}\n\nSri Siri Hospital, Tanuku',
+  reschedule: 'Hello {name}, your video consultation with {doctor} has been moved to {date} at {time} (Ref {ref}).\n\nReason: {reason}\n\nWe will send you the Zoom link on WhatsApp 30 minutes before your consultation.\n\nYou can see your appointment here: {tracker_link}\n\nSri Siri Hospital, Tanuku',
   cancellation: 'Hello {name}, we are sorry, your video consultation with {doctor} on {date} at {time} (Ref {ref}) has been cancelled.\n\nReason: {reason}\n\nYou can book another time here: {booking_link}\n\nSri Siri Hospital, Tanuku',
 });
 

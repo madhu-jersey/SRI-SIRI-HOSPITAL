@@ -173,7 +173,9 @@ describe('dashboard', () => {
     const confirmation = new URL(accepted.body.message.url);
     assert.equal(confirmation.pathname, '/919876543210');
     const text = confirmation.searchParams.get('text');
-    assert.ok(text.includes(accepted.body.consultation.meeting.join_url));
+    // The Zoom link is not in the confirmation; it comes 30 minutes before.
+    assert.ok(!text.includes(accepted.body.consultation.meeting.join_url));
+    assert.ok(text.includes('Zoom link on WhatsApp 30 minutes before'));
     assert.ok(text.includes('https://example.test/a/'));
     assert.ok(text.includes('Mon, 16 Nov 2026'));
     assert.ok(!JSON.stringify(accepted.body).includes('start_url'));
@@ -187,8 +189,15 @@ describe('dashboard', () => {
     assert.deepEqual(due, ['confirmation']);
     await call('POST', 'consultations/mark-sent', { token, body: { id: item.id, kind: 'confirmation' } });
 
-    // 30 minutes before 5:30 PM the Zoom link reminder appears.
+    // The patient page has no Join button yet...
+    const trackToken = accepted.body.consultation.tracker_url.split('/a/')[1];
+    assert.equal((await call('GET', `track?t=${encodeURIComponent(trackToken)}`)).body.joinUrl, null);
+    clock.t = Date.parse('2026-11-16T11:29:00Z');
+    assert.equal((await call('GET', `track?t=${encodeURIComponent(trackToken)}`)).body.joinUrl, null);
+
+    // 30 minutes before 5:30 PM the Zoom link reminder appears, and the Join button with it.
     clock.t = Date.parse('2026-11-16T11:30:00Z');
+    assert.equal((await call('GET', `track?t=${encodeURIComponent(trackToken)}`)).body.joinUrl, accepted.body.consultation.meeting.join_url);
     dash = await call('GET', 'dashboard', { token });
     due = remindersDue(dash.body.consultations, clock.t);
     assert.deepEqual(due.map((row) => row.kind), ['link']);
@@ -252,7 +261,7 @@ describe('dashboard', () => {
     assert.equal(bad.status, 400);
     const dash = await call('GET', 'dashboard', { token });
     const templates = { ...dash.body.settings.templates, request: 'New request {ref} from {name} for {date} {time}' };
-    const missing = await call('PUT', 'settings', { token, body: { templates: { ...templates, confirmation: 'No link here' } } });
+    const missing = await call('PUT', 'settings', { token, body: { templates: { ...templates, confirmation: 'Confirmed for {date}. Link: {zoom_link}' } } });
     assert.equal(missing.status, 400);
     assert.ok(missing.body.fields['templates.confirmation']);
     const saved = await call('PUT', 'settings', { token, body: { hospitalWhatsapp: '+91 90000 12345', templates } });

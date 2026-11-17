@@ -12,6 +12,9 @@ export const HOLD_SECONDS = 5 * 60;
 const LINK_DAYS_AFTER_END = 7;
 const DAY = 24 * 60 * 60 * 1000;
 const ACTIVE = ['requested', 'scheduled'];
+// The Zoom link reaches the patient only with the reminder 30 minutes before.
+const LINK_OPENS_MINUTES = 30;
+const LINK_LATER = 'sent to you on WhatsApp 30 minutes before your consultation';
 const actorOf = (staff) => ({ actor: staff.role === 'doctor' ? 'doctor' : 'staff', actorId: staff.user_id });
 
 function cleanName(value) {
@@ -89,7 +92,8 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
   async function present(row, doc, siteUrl, templates) {
     const messages = {};
     if (['scheduled', 'completed', 'feedback_received'].includes(row.status) && row.join_url) {
-      messages.confirmation = await prepare('confirmation', row, doc, siteUrl, templates);
+      // Even an older saved template with {zoom_link} never gives the link early.
+      messages.confirmation = await prepare('confirmation', row, doc, siteUrl, templates, { zoom_link: LINK_LATER });
       messages.link_reminder = await prepare('link_reminder', row, doc, siteUrl, templates);
       messages.feedback = await prepare('feedback', row, doc, siteUrl, templates);
     }
@@ -232,7 +236,8 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
       if (!row) throw new HttpError(404, 'This link is not valid or has expired.');
       const [doc, current] = await Promise.all([store.getDoctorById(row.doctor_id), settings()]);
       const ended = Date.parse(row.ends_at) <= now();
-      const showJoin = row.status === 'scheduled' && !ended && row.join_url;
+      const linkOpen = Date.parse(row.starts_at) - LINK_OPENS_MINUTES * 60_000 <= now();
+      const showJoin = row.status === 'scheduled' && !ended && linkOpen && row.join_url;
       return {
         ref: row.ref_code,
         name: row.patient_name,
@@ -399,7 +404,9 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
         else entries.hospital_whatsapp = phone.slice(1);
       }
       if (body.templates !== undefined) {
-        const required = { request: ['ref'], confirmation: ['zoom_link'], link_reminder: ['zoom_link'], feedback: ['feedback_link'], rejection: [], reschedule: ['date', 'time'], cancellation: [] };
+        // The Zoom link belongs only in the 30-minute reminder.
+        const forbidden = { confirmation: ['zoom_link'], reschedule: ['zoom_link'] };
+        const required = { request: ['ref'], confirmation: [], link_reminder: ['zoom_link'], feedback: ['feedback_link'], rejection: [], reschedule: ['date', 'time'], cancellation: [] };
         const templates = {};
         for (const key of TEMPLATE_KEYS) {
           const value = body.templates?.[key];
@@ -409,6 +416,7 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
           }
           const missing = required[key].filter((placeholder) => !value.includes(`{${placeholder}}`));
           if (missing.length) fields[`templates.${key}`] = `This message must include ${missing.map((item) => `{${item}}`).join(', ')}.`;
+          if ((forbidden[key] ?? []).some((placeholder) => value.includes(`{${placeholder}}`))) fields[`templates.${key}`] = 'Leave out {zoom_link}: the Zoom link is sent only 30 minutes before, in the Zoom link reminder.';
           templates[key] = value.replace(/\r\n/g, '\n');
         }
         entries.templates = templates;
@@ -567,7 +575,7 @@ export function createService({ config, store, zoom, messaging, realtime, now = 
       const consultation = await present(fresh, doc, siteUrl, current.templates);
       const message = await prepare('reschedule', fresh, doc, siteUrl, current.templates, {
         reason: note,
-        zoom_link: fresh.join_url ?? 'You will receive it after the doctor confirms.',
+        zoom_link: LINK_LATER,
       });
       await realtime.ping('rescheduled');
       return { consultation, message };
