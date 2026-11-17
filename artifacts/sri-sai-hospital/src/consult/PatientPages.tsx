@@ -3,7 +3,7 @@ import {
   ArrowLeft, ArrowRight, Check, Clock3, LoaderCircle, MessageCircle, RefreshCw, ShieldCheck, Star, Video,
 } from 'lucide-react';
 import { formatDate, formatTime, normalizeIndianMobile } from '../../shared/messages.mjs';
-import { ApiError, api, type PublicConfig, type SlotDay } from './api';
+import { ApiError, api, apiUrl, type PublicConfig, type SlotDay } from './api';
 import './consult.css';
 
 const SLOT_REFRESH_MS = 30_000;
@@ -61,8 +61,8 @@ function readStoredRequest(): RequestResult | null {
 
 function releaseHold(holdToken: string) {
   const payload = new Blob([JSON.stringify({ holdToken })], { type: 'application/json' });
-  if (!navigator.sendBeacon?.('/api/app/holds/release', payload)) {
-    fetch('/api/app/holds/release', { method: 'POST', body: payload, keepalive: true }).catch(() => {});
+  if (!navigator.sendBeacon?.(apiUrl('holds/release'), payload)) {
+    fetch(apiUrl('holds/release'), { method: 'POST', body: payload, keepalive: true }).catch(() => {});
   }
 }
 

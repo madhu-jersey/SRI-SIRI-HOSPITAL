@@ -8,12 +8,19 @@ export class ApiError extends Error {
   }
 }
 
+// One server function handles every route; the route name goes in ?route=
+// so the call works the same on Vercel and in the local dev server.
+export function apiUrl(route: string) {
+  const [path, query] = route.split('?');
+  return `/api/app?route=${encodeURIComponent(path)}${query ? `&${query}` : ''}`;
+}
+
 type ApiInit = { method?: 'GET' | 'POST' | 'PUT'; body?: unknown; token?: string; signal?: AbortSignal };
 
 export async function api<T>(route: string, { method = 'GET', body, token, signal }: ApiInit = {}): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(`/api/app/${route}`, {
+    response = await fetch(apiUrl(route), {
       method,
       signal,
       headers: {
