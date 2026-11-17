@@ -94,3 +94,62 @@ test('a notification failure never blocks a booking', async () => {
   const request = await call('POST', 'requests', { holdToken: hold.body.holdToken, name: 'Ravi Kumar', phone: '9876543210', confirmPhone: '9876543210', consent: true });
   assert.equal(request.status, 200);
 });
+
+test('reminders are notified once when due and once when overdue', async () => {
+  const clock = { t: START };
+  const now = () => clock.t;
+  const store = createMemoryStore({ now, demoPassword: 'pw' });
+  const sent = [];
+  const push = { enabled: true, publicKey: 'k', async send(subscription, payload) { sent.push(payload); return { ok: true }; } };
+  const app = await buildApp({ env: { ...ENV, REMINDERS_SECRET: 'every-minute' }, store, now, push });
+  let ip = 0;
+  async function call(method, route, { body, token, auth } = {}) {
+    const request = { method, url: `/api/app?route=${route}`, headers: { ...(token ? { authorization: `Bearer ${token}` } : {}), ...(auth ? { authorization: auth } : {}), 'x-forwarded-for': `198.51.100.${(ip += 1)}` }, body, socket: {} };
+    if (body === undefined) request[Symbol.asyncIterator] = async function* () {};
+    const response = { statusCode: 0, setHeader() {}, end(text) { this.text = text; } };
+    await app.handle(request, response);
+    return { status: response.statusCode, body: JSON.parse(response.text) };
+  }
+  const tick = () => call('GET', 'cron/reminders', { auth: 'Bearer every-minute' });
+  const { body: { accessToken: token } } = await call('POST', 'auth/demo', { body: { email: 'doctor@demo.local', password: 'pw' } });
+  await call('POST', 'push/subscribe', { token, body: { subscription: device(1) } });
+
+  // The scheduler needs its own secret; the daily cleanup secret is not enough.
+  assert.equal((await call('GET', 'cron/reminders')).status, 401);
+  assert.equal((await call('GET', 'cron/reminders', { auth: 'Bearer cron' })).status, 401);
+
+  const hold = await call('POST', 'holds', { body: { start: '2026-11-16T12:00:00.000Z' } });
+  await call('POST', 'requests', { body: { holdToken: hold.body.holdToken, name: 'Ravi Kumar', phone: '9876543210', confirmPhone: '9876543210', consent: true } });
+  sent.length = 0; // ignore the new-request notification
+  const id = (await call('GET', 'dashboard', { token })).body.consultations[0].id;
+  await call('POST', 'consultations/accept', { token, body: { id } });
+
+  // Right after Accept: the confirmation is due, but not worth a notification yet.
+  assert.equal((await tick()).body.notified, 0);
+  // 10 minutes later it is overdue: one notification, and only one.
+  clock.t += 10 * 60_000;
+  await tick();
+  await tick();
+  assert.deepEqual(sent.map((item) => item.title), ['Overdue: send confirmation to Ravi Kumar']);
+  await call('POST', 'consultations/mark-sent', { token, body: { id, kind: 'confirmation' } });
+
+  // 5:00 PM: the Zoom link is due.
+  sent.length = 0;
+  clock.t = Date.parse('2026-11-16T11:30:00Z');
+  await tick();
+  await tick();
+  assert.deepEqual(sent.map((item) => item.title), ['Send Zoom link to Ravi Kumar — 5:30 PM']);
+  // 5:10 PM, still not marked sent: overdue.
+  clock.t = Date.parse('2026-11-16T11:40:00Z');
+  await tick();
+  assert.equal(sent.at(-1).title, 'Overdue: send Zoom link to Ravi Kumar — 5:30 PM');
+  assert.equal(sent.length, 2);
+  await call('POST', 'consultations/mark-sent', { token, body: { id, kind: 'link' } });
+
+  // 6:15 PM: feedback request due.
+  sent.length = 0;
+  clock.t = Date.parse('2026-11-16T12:45:00Z');
+  await tick();
+  assert.deepEqual(sent.map((item) => item.title), ['Ask Ravi Kumar for feedback']);
+  assert.equal(sent[0].url, '/dashboard');
+});

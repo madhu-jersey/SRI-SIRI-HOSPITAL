@@ -29,6 +29,7 @@ export function createMemoryStore({ now = () => Date.now(), demoPassword = 'demo
   const sessions = new Map();
   const timeOff = [];
   const pushDevices = new Map();
+  const reminderPushes = new Set();
   const demoUser = { id: randomUUID(), email: 'doctor@demo.local' };
   const staff = { user_id: demoUser.id, doctor_id: doctor.id, role: 'doctor', display_name: 'Dr. Sritha' };
 
@@ -153,6 +154,13 @@ export function createMemoryStore({ now = () => Date.now(), demoPassword = 'demo
     },
     async removePushDevice(key) {
       pushDevices.delete(key);
+    },
+    // True the first time a reminder stage is claimed, so each is notified once.
+    async claimReminderPush(consultationId, kind, stage) {
+      const key = `${consultationId}:${kind}:${stage}`;
+      if (reminderPushes.has(key)) return false;
+      reminderPushes.add(key);
+      return true;
     },
     async getSettings() {
       return Object.fromEntries([...settings].map(([key, row]) => [key, clone(row.value)]));

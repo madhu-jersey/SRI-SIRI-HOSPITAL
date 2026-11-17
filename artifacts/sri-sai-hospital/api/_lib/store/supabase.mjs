@@ -134,6 +134,13 @@ export function createSupabaseStore(config) {
       const { error } = await db.from('settings').delete().eq('key', key);
       if (error) fail(error, 'remove device');
     },
+    // True the first time a reminder stage is claimed, so each is notified once.
+    async claimReminderPush(consultationId, kind, stage) {
+      const { error } = await db.from('reminder_pushes').insert({ consultation_id: consultationId, kind, stage });
+      if (error?.code === '23505') return false;
+      if (error) fail(error, 'reminder log');
+      return true;
+    },
     async getSettings() {
       const { data, error } = await db.from('settings').select('key, value').not('key', 'like', 'push:%');
       if (error) fail(error, 'settings');

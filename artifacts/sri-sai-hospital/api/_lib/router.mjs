@@ -15,11 +15,11 @@ export function createRouter({ config, store, service }) {
     return { ...staff, email: user.email };
   }
 
-  function requireCron(request) {
+  function requireCron(request, secret = config.cronSecret) {
     const header = String(request.headers?.authorization ?? '');
-    const expected = Buffer.from(`Bearer ${config.cronSecret}`);
+    const expected = Buffer.from(`Bearer ${secret}`);
     const actual = Buffer.from(header);
-    if (!config.cronSecret || expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
+    if (!secret || expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
       throw new HttpError(401, 'Not allowed.');
     }
   }
@@ -34,6 +34,8 @@ export function createRouter({ config, store, service }) {
     'GET feedback': ({ query }) => service.feedbackInfo(query.get('t')),
     'POST feedback': async ({ request }) => service.submitFeedback(await readJson(request), clientIp(request)),
     'GET cron/cleanup': ({ request }) => { requireCron(request); return service.cleanup(); },
+    'GET cron/reminders': ({ request }) => { requireCron(request, config.remindersSecret); return service.cronReminders(); },
+    'POST cron/reminders': ({ request }) => { requireCron(request, config.remindersSecret); return service.cronReminders(); },
 
     'POST auth/demo': async ({ request }) => {
       if (store.kind !== 'memory' || !store.demoSignIn) throw new HttpError(404, 'Not found.');

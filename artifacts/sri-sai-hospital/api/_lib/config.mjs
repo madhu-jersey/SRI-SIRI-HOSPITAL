@@ -22,6 +22,8 @@ export function readConfig(env = process.env) {
     siteUrl: (env.SITE_URL || '').replace(/\/+$/, ''),
     appSecret,
     cronSecret: env.CRON_SECRET || '',
+    // Used by the database scheduler that checks reminders every minute.
+    remindersSecret: env.REMINDERS_SECRET || '',
     hospitalWhatsapp: hospitalPhone ? hospitalPhone.slice(1) : '',
     supabaseUrl: env.SUPABASE_URL || '',
     supabaseSecretKey: env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || '',

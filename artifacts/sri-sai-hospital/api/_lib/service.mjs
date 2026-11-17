@@ -3,6 +3,7 @@ import {
   DEFAULT_TEMPLATES, TEMPLATE_KEYS, formatDate, formatIndianPhone, formatTime, messageValues, normalizeIndianMobile, renderTemplate, waLink,
 } from '../../shared/messages.mjs';
 import { STATUS_LABELS } from '../../shared/status.mjs';
+import { remindersDue } from '../../shared/reminders.mjs';
 import { HttpError } from './http.mjs';
 import { BOOKING_DAYS, buildSlotDays, calendarDays, findSlot, istDateKey, istMidnightOf } from './slots.mjs';
 import { StoreConflict } from './store/errors.mjs';
@@ -322,6 +323,34 @@ export function createService({ config, store, zoom, messaging, realtime, push =
       await store.transition(row.id, status, 'feedback_received', {}, { actor: 'patient', note: `Feedback: ${rating} of 5` });
       await realtime.ping('feedback');
       return { saved: true };
+    },
+
+    // Run every minute by the database scheduler: notifies staff devices about
+    // WhatsApp reminders that are due or overdue, once per stage.
+    async cronReminders() {
+      await housekeeping();
+      if (!push.enabled) return { notified: 0 };
+      const rows = await store.listDashboard(new Date(now() - 4 * DAY).toISOString());
+      const byId = new Map(rows.map((row) => [row.id, row]));
+      let notified = 0;
+      for (const item of remindersDue(rows, now())) {
+        // A confirmation is due the moment the doctor accepts, while the send
+        // box is still open, so only an overdue one is worth a notification.
+        if (item.kind === 'confirmation' && !item.overdue) continue;
+        const stage = item.overdue ? 'overdue' : 'due';
+        if (!(await store.claimReminderPush(item.consultationId, item.kind, stage))) continue;
+        const row = byId.get(item.consultationId);
+        const time = formatTime(row.starts_at);
+        const what = {
+          link: [`Send Zoom link to ${row.patient_name} — ${time}`, 'The consultation starts in 30 minutes. Open the dashboard to send the link on WhatsApp.'],
+          confirmation: [`Send confirmation to ${row.patient_name}`, `${formatDate(row.starts_at)}, ${time}. The confirmation has not been marked sent.`],
+          feedback: [`Ask ${row.patient_name} for feedback`, `Their ${time} consultation has ended. Send the feedback request on WhatsApp.`],
+        }[item.kind];
+        const title = item.overdue ? `Overdue: ${what[0].charAt(0).toLowerCase()}${what[0].slice(1)}` : what[0];
+        const body = item.overdue ? `Not marked sent for 10 minutes. ${what[1]}` : what[1];
+        if (await notifyStaff({ title, body, url: '/dashboard', tag: `${item.kind}-${row.ref_code}` })) notified += 1;
+      }
+      return { notified };
     },
 
     async cleanup() {
