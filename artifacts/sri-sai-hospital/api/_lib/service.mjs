@@ -330,6 +330,9 @@ export function createService({ config, store, zoom, messaging, realtime, push =
     async cronReminders() {
       await housekeeping();
       if (!push.enabled) return { notified: 0 };
+      // With no device signed up there is nobody to tell; leave reminders
+      // unclaimed so a phone added later still hears about them.
+      if (!(await store.listPushDevices()).length) return { notified: 0, devices: 0 };
       const rows = await store.listDashboard(new Date(now() - 4 * DAY).toISOString());
       const byId = new Map(rows.map((row) => [row.id, row]));
       let notified = 0;

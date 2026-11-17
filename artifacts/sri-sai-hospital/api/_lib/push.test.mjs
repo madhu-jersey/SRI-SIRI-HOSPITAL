@@ -153,3 +153,29 @@ test('reminders are notified once when due and once when overdue', async () => {
   assert.deepEqual(sent.map((item) => item.title), ['Ask Ravi Kumar for feedback']);
   assert.equal(sent[0].url, '/dashboard');
 });
+
+test('reminders wait until a device is signed up', async () => {
+  const clock = { t: START };
+  const now = () => clock.t;
+  const store = createMemoryStore({ now, demoPassword: 'pw' });
+  const sent = [];
+  const push = { enabled: true, publicKey: 'k', async send(subscription, payload) { sent.push(payload); return { ok: true }; } };
+  const app = await buildApp({ env: { ...ENV, REMINDERS_SECRET: 's' }, store, now, push });
+  const call = async (method, route, body, auth) => {
+    const request = { method, url: `/api/app?route=${route}`, headers: { 'x-forwarded-for': '203.0.113.9', ...(auth ? { authorization: auth } : {}) }, body, socket: {} };
+    if (body === undefined) request[Symbol.asyncIterator] = async function* () {};
+    const response = { statusCode: 0, setHeader() {}, end(text) { this.text = text; } };
+    await app.handle(request, response);
+    return { status: response.statusCode, body: JSON.parse(response.text) };
+  };
+  const { body: { accessToken: token } } = await call('POST', 'auth/demo', { email: 'doctor@demo.local', password: 'pw' });
+  const hold = await call('POST', 'holds', { start: '2026-11-16T12:00:00.000Z' });
+  await call('POST', 'requests', { holdToken: hold.body.holdToken, name: 'Ravi Kumar', phone: '9876543210', confirmPhone: '9876543210', consent: true });
+  const id = (await call('GET', 'dashboard', undefined, `Bearer ${token}`)).body.consultations[0].id;
+  await call('POST', 'consultations/accept', { id }, `Bearer ${token}`);
+  clock.t = Date.parse('2026-11-16T11:30:00Z');
+  assert.equal((await call('GET', 'cron/reminders', undefined, 'Bearer s')).body.notified, 0);
+  await call('POST', 'push/subscribe', { subscription: device(1) }, `Bearer ${token}`);
+  await call('GET', 'cron/reminders', undefined, 'Bearer s');
+  assert.ok(sent.some((item) => item.title === 'Send Zoom link to Ravi Kumar — 5:30 PM'));
+});
