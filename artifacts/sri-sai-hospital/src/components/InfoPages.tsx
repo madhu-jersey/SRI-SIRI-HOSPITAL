@@ -1,42 +1,9 @@
 import { Fragment, useState } from 'react';
 import {
-  Activity, ArrowLeft, Brain, CalendarClock, Check, ChevronDown, Clock3, MapPin, PhoneCall, Stethoscope,
+  ArrowLeft, ChevronDown,
 } from 'lucide-react';
 
 const phone = '+918819224466';
-
-export const reasons = [
-  {
-    title: 'Internal medicine and diabetes care',
-    text: 'Structured care for diabetes, thyroid disorders, and general medical illness.',
-    icon: Activity,
-  },
-  {
-    title: 'Neuro-psychiatry and stroke care',
-    text: 'Evaluation and ongoing management of brain, nerve, and mental health conditions.',
-    icon: Brain,
-  },
-  {
-    title: 'Specialist doctors',
-    text: 'Two doctors, each with a listed qualification and registration number on their profile.',
-    icon: Stethoscope,
-  },
-  {
-    title: '24-hour casualty',
-    text: 'Round-the-clock casualty services at the same number as the clinic.',
-    icon: Clock3,
-  },
-  {
-    title: 'Easy to reach',
-    text: 'Call 88192 24466 for directions or to ask a question.',
-    icon: MapPin,
-  },
-  {
-    title: 'Clear timings',
-    text: 'Outpatient hours are published on the site, with the current open or closed status.',
-    icon: CalendarClock,
-  },
-];
 
 export const questions = [
   {
@@ -95,33 +62,6 @@ function Heading({ id, label, words, italic }: { id: string; label: string; word
         </em>
       </h1>
     </header>
-  );
-}
-
-export function WhyChoosePage() {
-  return (
-    <main className="info-page why-choose-page" aria-labelledby="why-choose-heading">
-      <div className="container info-container">
-        <div className="info-intro">
-          <Heading id="why-choose-heading" label="Why choose us" words={['Care', 'that', 'is']} italic="close to home." />
-          <p>Internal medicine, neuro-psychiatry, stroke and diabetes care in Tanuku, with 24-hour casualty services.</p>
-        </div>
-        <div className="reason-grid">
-          {reasons.map(({ title, text, icon: Icon }, index) => (
-            <article className="reason-card" key={title} style={{ '--item-index': index } as React.CSSProperties}>
-              <span className="reason-icon"><Icon size={23} strokeWidth={1.6} aria-hidden="true" /></span>
-              <h2>{title}</h2>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
-        <div className="info-doctors">
-          <a className="info-doctor-link" href="/#doctor-sritha"><span><Check size={17} aria-hidden="true" /> Dr. Sritha</span><ChevronDown size={17} aria-hidden="true" /></a>
-          <a className="info-doctor-link" href="/#doctor-jayavardhan"><span><Check size={17} aria-hidden="true" /> Dr. Jayavardhan Reddy Bijjam</span><ChevronDown size={17} aria-hidden="true" /></a>
-          <a className="button button-primary info-book-button" href={`tel:${phone}`}><PhoneCall size={17} aria-hidden="true" /> Call to book</a>
-        </div>
-      </div>
-    </main>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { CalendarDays, Check, PhoneCall, Stethoscope } from 'lucide-react';
 
-const doctors = [
+export const doctors = [
   {
     name: 'Dr. Sritha',
     specialty: 'Neuro-Psychiatry',

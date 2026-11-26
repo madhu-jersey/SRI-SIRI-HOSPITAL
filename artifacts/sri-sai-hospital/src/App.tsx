@@ -4,7 +4,8 @@ import {
 } from 'lucide-react';
 import { DoctorsSection } from './components/DoctorsSection';
 import { VideosSection } from './components/VideosSection';
-import { FaqPage, WhyChoosePage } from './components/InfoPages';
+import { FaqPage } from './components/InfoPages';
+import { WhyChoosePage } from './components/WhyChoosePage';
 import { AboutSection } from './components/HomeSections';
 import { HeroDashes } from './components/HeroDashes';
 import { galleryItems } from './data/gallery';
@@ -936,7 +937,7 @@ function App() {
         description: 'Sri Siri Hospital in Tanuku, Andhra Pradesh. Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services.',
       },
       faq: { title: 'Frequently asked questions · Sri Siri Hospital, Tanuku', description: 'Frequently asked questions · Sri Siri Hospital, Tanuku' },
-      'why-choose': { title: 'Why choose Sri Siri Hospital, Tanuku', description: 'Why choose Sri Siri Hospital, Tanuku' },
+      'why-choose': { title: 'Why choose Sri Siri Hospital, Tanuku', description: 'Two specialist doctors, a laboratory, 24-hour casualty and video consultations at Sri Siri Hospital, Velpur Road, Tanuku. Rated 5.0 from 31 Google reviews.' },
       consult: { title: 'Video consultation with Dr. Sritha · Sri Siri Hospital', description: 'Book a Zoom video consultation with Dr. Sritha at Sri Siri Hospital, Tanuku. Pick a time and send your request on WhatsApp.' },
       track: { title: 'Your appointment · Sri Siri Hospital', description: 'Your video consultation with Sri Siri Hospital.' },
       feedback: { title: 'Feedback · Sri Siri Hospital', description: 'Tell us how your consultation went.' },
