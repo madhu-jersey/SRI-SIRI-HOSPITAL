@@ -116,7 +116,7 @@ export function HeroDotField() {
           mass = 0.8;
         }
 
-        const color = Math.random() < 0.68 ? '17, 17, 17' : '0, 128, 106';
+        const color = Math.random() < 0.68 ? '17, 17, 17' : '27, 58, 122';
 
         dots.push({
           x,

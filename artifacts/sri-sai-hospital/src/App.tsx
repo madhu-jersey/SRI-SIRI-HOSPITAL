@@ -427,17 +427,24 @@ function Hero() {
               </span>
               <span><b>2 specialist doctors</b><small>Neuro-psychiatry · General medicine</small></span>
             </a>
-
-            <div className="status-card" aria-live="polite">
-              <div className="status-top">
-                <span className="status-label"><span className="live-dot" aria-hidden="true" /> Clinic hours</span>
-                <span className={`status-text${isOpen ? '' : ' closed'}`} data-testid="status-open">{isOpen ? 'Open now' : 'Closed now'}</span>
-              </div>
-              <div className="hours-line"><span>Mon–Sat · Morning</span><strong>9:30 AM – 2:00 PM</strong></div>
-              <div className="hours-line"><span>Mon–Sat · Evening</span><strong>5:30 PM – 8:30 PM</strong></div>
-              <div className="hours-line"><span>1st &amp; 3rd Sunday</span><strong>9:30 AM – 2:00 PM</strong></div>
-            </div>
           </div>
+        </div>
+      </div>
+      <div className="container hero-facts" role="list" aria-label="Hospital at a glance">
+        <div className="hero-fact" role="listitem">
+          <span className="hero-fact-label">Reception and casualty</span>
+          <a className="hero-fact-value" href={`tel:${phone}`}>88192 24466</a>
+          <span className="hero-fact-note">Casualty open 24 hours, every day</span>
+        </div>
+        <div className="hero-fact" role="listitem" aria-live="polite">
+          <span className="hero-fact-label">OPD, Monday to Saturday <span className={`hero-fact-status${isOpen ? '' : ' closed'}`} data-testid="status-open">{isOpen ? 'Open now' : 'Closed now'}</span></span>
+          <strong className="hero-fact-value">9:30 am–2 pm · 5:30–8:30 pm</strong>
+          <span className="hero-fact-note">Also 1st and 3rd Sunday, 9:30 am to 2 pm</span>
+        </div>
+        <div className="hero-fact" role="listitem">
+          <span className="hero-fact-label">Video consultation</span>
+          <strong className="hero-fact-value">Dr. Sritha on Zoom</strong>
+          <a className="hero-fact-link" href="/consult">Book a time online</a>
         </div>
       </div>
     </section>

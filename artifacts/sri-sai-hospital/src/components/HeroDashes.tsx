@@ -14,7 +14,7 @@ type Dash = {
   angle: number;
 };
 
-const colors = ['rgba(0,128,106,.4)', 'rgba(150,180,0,.62)', 'rgba(11,79,66,.28)'];
+const colors = ['rgba(27,58,122,.4)', 'rgba(255,179,188,.62)', 'rgba(16,42,92,.28)'];
 const lengths = [5, 8, 8, 11];
 const pullRadius = 220;
 

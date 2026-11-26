@@ -1,7 +1,7 @@
 /* Patient pages: /consult, /a/:token, /f/:token.
    Builds on the booking card styles in index.css and theme.css. */
 
-.consult-page { min-height:70vh; padding:44px 0 110px; background:linear-gradient(180deg,#EAF5EF 0%,var(--paper) 340px); }
+.consult-page { min-height:70vh; padding:44px 0 110px; background:linear-gradient(180deg,#EAEDF5 0%,var(--paper) 340px); }
 .consult-container { width:min(1120px,calc(100% - 64px)); margin-inline:auto; }
 .consult-narrow .consult-container { width:min(720px,calc(100% - 64px)); }
 .consult-heading { max-width:720px; margin:28px 0 34px; }
@@ -11,36 +11,36 @@
 
 .consult-card { max-width:none; }
 .booking-summary-top h2 { margin:8px 0 12px; color:#fff; font:700 clamp(28px,3vw,36px)/1.15 'Plus Jakarta Sans',sans-serif; letter-spacing:-.045em; }
-.booking-success h2 { margin:7px 0 8px; color:#0B4F42; font:700 clamp(26px,3vw,34px)/1.12 'Plus Jakarta Sans',sans-serif; letter-spacing:-.045em; }
+.booking-success h2 { margin:7px 0 8px; color:#102A5C; font:700 clamp(26px,3vw,34px)/1.12 'Plus Jakarta Sans',sans-serif; letter-spacing:-.045em; }
 
 .consult-step { min-width:0; margin:0; padding:0; border:0; }
-.consult-step legend { display:flex; align-items:center; gap:10px; width:100%; margin:0 0 12px; color:#0B4F42; font:700 15px/1.3 'Plus Jakarta Sans',sans-serif; }
+.consult-step legend { display:flex; align-items:center; gap:10px; width:100%; margin:0 0 12px; color:#102A5C; font:700 15px/1.3 'Plus Jakarta Sans',sans-serif; }
 .consult-step legend > span { display:grid; flex:none; width:24px; height:24px; place-items:center; border-radius:50%; background:var(--green-tint); color:var(--green); font-size:12px; font-weight:800; }
 .consult-step legend em { margin-left:auto; color:var(--body-text); font:500 12px 'Inter',sans-serif; font-style:normal; }
 
 .consult-date-strip { display:grid; grid-auto-columns:minmax(72px,1fr); grid-auto-flow:column; gap:8px; overflow-x:auto; padding:2px 2px 8px; scroll-snap-type:x proximity; scrollbar-width:thin; outline:none; }
-.consult-date { display:grid; justify-items:center; gap:1px; min-height:92px; padding:10px 4px 9px; border:1px solid #dce7e2; border-radius:14px; background:#fff; color:#385048; font:inherit; cursor:pointer; scroll-snap-align:start; transition:border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.22,1,.36,1); }
-.consult-date small { color:#6b7c76; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+.consult-date { display:grid; justify-items:center; gap:1px; min-height:92px; padding:10px 4px 9px; border:1px solid #DCDFE7; border-radius:14px; background:#fff; color:#39404F; font:inherit; cursor:pointer; scroll-snap-align:start; transition:border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.22,1,.36,1); }
+.consult-date small { color:#6B707C; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
 .consult-date strong { color:var(--ink); font:800 22px/1.15 'Plus Jakarta Sans',sans-serif; }
 .consult-date i { margin-top:4px; color:var(--green); font-size:10px; font-style:normal; font-weight:700; }
-.consult-date:hover:not(:disabled) { border-color:#79b5a5; background:#f4faf7; }
-.consult-date.is-selected { border-color:var(--green); background:var(--green); box-shadow:0 12px 24px -14px rgba(0,128,106,.8); }
+.consult-date:hover:not(:disabled) { border-color:#7B8CB3; background:#F4F6FA; }
+.consult-date.is-selected { border-color:var(--green); background:var(--green); box-shadow:0 12px 24px -14px rgba(27,58,122,.8); }
 .consult-date.is-selected small, .consult-date.is-selected strong { color:#fff; }
 .consult-date.is-selected i { color:var(--lime); }
-.consult-date:disabled { cursor:not-allowed; opacity:.5; background:#f5f8f7; }
-.consult-date:disabled i { color:#8a9893; }
+.consult-date:disabled { cursor:not-allowed; opacity:.5; background:#F5F6F8; }
+.consult-date:disabled i { color:#8A8E98; }
 .consult-date:focus-visible, .consult-slot:focus-visible, .consult-stars button:focus-visible { outline:3px solid var(--lime); outline-offset:3px; }
-.consult-date-strip.is-loading span { min-height:92px; border-radius:14px; background:linear-gradient(100deg,#edf3f0 25%,#f7faf8 45%,#edf3f0 65%); background-size:200% 100%; animation:booking-shimmer 1.15s ease-in-out infinite; }
+.consult-date-strip.is-loading span { min-height:92px; border-radius:14px; background:linear-gradient(100deg,#EDEFF3 25%,#F7F8FA 45%,#EDEFF3 65%); background-size:200% 100%; animation:booking-shimmer 1.15s ease-in-out infinite; }
 
 .consult-period + .consult-period { margin-top:14px; }
-.consult-period h3 { margin:0 0 8px; color:#5b6b65; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
-.consult-slot { display:flex; align-items:center; justify-content:center; min-height:48px; padding:8px 5px; border:1px solid #dce7e2; border-radius:10px; background:#fff; color:#385048; font:600 13px 'Inter',sans-serif; cursor:pointer; transition:background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease; }
-.consult-slot:hover:not(:disabled) { border-color:#79b5a5; background:#f4faf7; }
-.consult-slot.is-selected { border-color:var(--green); background:#e8f5ef; color:#075c4d; box-shadow:inset 0 0 0 1px var(--green); }
+.consult-period h3 { margin:0 0 8px; color:#5B606B; font-size:11px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+.consult-slot { display:flex; align-items:center; justify-content:center; min-height:48px; padding:8px 5px; border:1px solid #DCDFE7; border-radius:10px; background:#fff; color:#39404F; font:600 13px 'Inter',sans-serif; cursor:pointer; transition:background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.consult-slot:hover:not(:disabled) { border-color:#7B8CB3; background:#F4F6FA; }
+.consult-slot.is-selected { border-color:var(--green); background:#E8ECF5; color:#132550; box-shadow:inset 0 0 0 1px var(--green); }
 .consult-slot:disabled { cursor:wait; }
 .consult-step.has-error .consult-date-strip, .consult-step.has-error .booking-slot-grid { border-radius:12px; box-shadow:0 0 0 1px #c4483b; }
 
-.consult-hold { display:flex; align-items:center; gap:10px; margin-top:14px; padding:12px 14px; border:1px solid #cfe4da; border-radius:12px; background:#f2f9f5; color:#0B4F42; animation:booking-feedback-in .22s ease both; }
+.consult-hold { display:flex; align-items:center; gap:10px; margin-top:14px; padding:12px 14px; border:1px solid #D0D6E3; border-radius:12px; background:#F3F4F8; color:#102A5C; animation:booking-feedback-in .22s ease both; }
 .consult-hold svg { flex:none; color:var(--green); }
 .consult-hold p { margin:0; font-size:13px; line-height:1.5; }
 .consult-hold-timer { display:inline-block; min-width:3.2em; color:var(--green); font-weight:800; font-variant-numeric:tabular-nums; }
@@ -48,15 +48,15 @@
 .consult-hold.is-ending svg, .consult-hold.is-ending .consult-hold-timer { color:#a86a00; }
 
 .consult-fields .consult-full { grid-column:1 / -1; }
-.consult-whatsapp-button { background:#128C4A; box-shadow:0 14px 28px -12px rgba(18,140,74,.6); }
+.consult-whatsapp-button { background:#128C4A; box-shadow:0 14px 28px -12px rgba(35,61,123,.6); }
 .consult-whatsapp-button:hover { background:#0B6B37; }
 .consult-whatsapp-label { display:inline-flex; align-items:center; gap:10px; }
-.consult-after-note { margin:-8px 0 0; color:#6b7c76; font-size:12px; text-align:center; }
+.consult-after-note { margin:-8px 0 0; color:#6B707C; font-size:12px; text-align:center; }
 
 .consult-sent { align-items:stretch; }
 .consult-sent > p { line-height:1.65; }
-.consult-ref { display:grid; gap:2px; margin:20px 0; padding:18px 20px; border:1px dashed #9fcbbb; border-radius:14px; background:#f4faf7; }
-.consult-ref span { color:#5b6b65; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.consult-ref { display:grid; gap:2px; margin:20px 0; padding:18px 20px; border:1px dashed #A1ADC9; border-radius:14px; background:#F4F6FA; }
+.consult-ref span { color:#5B606B; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
 .consult-ref strong { color:var(--ink); font:800 34px/1.2 'Plus Jakarta Sans',sans-serif; letter-spacing:.04em; }
 .consult-ref small { color:var(--green); font-size:14px; font-weight:700; }
 .consult-sent .consult-whatsapp-button { justify-content:space-between; min-height:54px; margin-bottom:16px; padding-inline:22px; }
@@ -65,31 +65,31 @@
 
 .consult-load-error { display:grid; gap:14px; justify-items:start; color:#8c3228; }
 
-.consult-panel { padding:clamp(24px,4vw,40px); border-radius:24px; background:#fff; box-shadow:0 30px 70px -40px rgba(11,79,66,.45); color:var(--body-text); }
+.consult-panel { padding:clamp(24px,4vw,40px); border-radius:24px; background:#fff; box-shadow:0 30px 70px -40px rgba(16,42,92,.45); color:var(--body-text); }
 .consult-panel > p { margin:0 0 10px; line-height:1.7; }
 .consult-panel a:not(.button) { color:var(--green); font-weight:700; }
 .consult-track-top { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; }
-.consult-track-ref { color:#5b6b65; font-size:13px; font-weight:700; letter-spacing:.04em; }
-.consult-status { display:inline-flex; align-items:center; min-height:30px; padding:0 12px; border-radius:999px; background:#eef3f1; color:#385048; font-size:12px; font-weight:800; }
+.consult-track-ref { color:#5B606B; font-size:13px; font-weight:700; letter-spacing:.04em; }
+.consult-status { display:inline-flex; align-items:center; min-height:30px; padding:0 12px; border-radius:999px; background:#EEF0F3; color:#39404F; font-size:12px; font-weight:800; }
 .consult-status.status-requested { background:#fff4dc; color:#8a5a00; }
-.consult-status.status-scheduled { background:#e3f4ec; color:#07644f; }
+.consult-status.status-scheduled { background:#E4E9F3; color:#142857; }
 .consult-status.status-rejected, .consult-status.status-cancelled, .consult-status.status-expired { background:#fbe9e6; color:#8c3228; }
 .consult-panel h2 { margin:16px 0 4px; color:var(--ink); font:800 clamp(24px,3.4vw,32px)/1.2 'Plus Jakarta Sans',sans-serif; letter-spacing:-.04em; }
 .consult-track-who { margin:0 0 6px; color:var(--body-text); font-size:15px; }
 .consult-track-note { display:grid; justify-items:start; gap:12px; margin-top:22px; padding-top:20px; border-top:1px solid var(--line); }
 .consult-track-note p { margin:0; line-height:1.65; }
 .consult-join { min-height:56px; padding-inline:28px; gap:10px; }
-.consult-passcode { color:#385048; font-size:14px; }
-.consult-track-help { margin-top:24px !important; color:#5b6b65; font-size:13px; }
+.consult-passcode { color:#39404F; font-size:14px; }
+.consult-track-help { margin-top:24px !important; color:#5B606B; font-size:13px; }
 
 .consult-stars { margin:6px 0 0; padding:0; border:0; }
-.consult-stars legend { margin-bottom:8px; color:#0B4F42; font-weight:700; }
+.consult-stars legend { margin-bottom:8px; color:#102A5C; font-weight:700; }
 .consult-stars [role="radiogroup"] { display:flex; flex-wrap:wrap; align-items:center; gap:4px; }
-.consult-stars button { display:grid; width:52px; height:52px; place-items:center; border:0; border-radius:12px; background:transparent; color:#c3d0cb; cursor:pointer; transition:color .15s ease, transform .18s cubic-bezier(.22,1,.36,1); }
+.consult-stars button { display:grid; width:52px; height:52px; place-items:center; border:0; border-radius:12px; background:transparent; color:#C3C7D0; cursor:pointer; transition:color .15s ease, transform .18s cubic-bezier(.22,1,.36,1); }
 .consult-stars button.is-on { color:var(--gold); }
 .consult-stars button.is-on svg { fill:currentColor; }
 .consult-stars button:hover { transform:translateY(-2px); }
-.consult-star-label { margin-left:8px; color:#0B4F42; font-weight:700; }
+.consult-star-label { margin-left:8px; color:#102A5C; font-weight:700; }
 
 @media (max-width:767px) {
   .consult-page { padding:26px 0 120px; }
