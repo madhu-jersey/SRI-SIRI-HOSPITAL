@@ -77,7 +77,7 @@
 .dash-nav { display:grid; gap:4px; }
 .dash-nav-item { display:flex; align-items:center; gap:12px; width:100%; min-height:42px; padding:0 12px; border:0; border-radius:10px; background:transparent; color:rgba(255,255,255,.74); font:600 14px 'Inter',sans-serif; text-align:left; cursor:pointer; transition:background .15s ease, color .15s ease; }
 .dash-nav-item:hover { background:rgba(255,255,255,.07); color:#fff; }
-.dash-nav-item.is-active { background:rgba(255,255,255,.12); color:#fff; box-shadow:inset 3px 0 0 #FFB3BC; }
+.dash-nav-item.is-active { background:rgba(255,255,255,.16); color:#fff; font-weight:700; }
 .dash-nav-item span { flex:1; }
 .dash-nav-count { min-width:22px; padding:1px 7px; border-radius:999px; background:rgba(255,255,255,.16); color:#fff; font-size:11px; font-weight:700; text-align:center; }
 .dash-nav-count.is-alert { background:#E5533F; }
