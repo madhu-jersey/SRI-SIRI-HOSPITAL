@@ -5,7 +5,7 @@ import {
 import { DoctorsSection } from './components/DoctorsSection';
 import { VideosSection } from './components/VideosSection';
 import { FaqPage } from './components/InfoPages';
-import { WhyChoosePage } from './components/WhyChoosePage';
+import { WhyChooseSection, WhyChoosePage } from './components/WhyChoosePage';
 import { AboutSection } from './components/HomeSections';
 import { HeroDashes } from './components/HeroDashes';
 import { galleryItems } from './data/gallery';
@@ -991,6 +991,7 @@ function App() {
         <main>
           <Hero />
           <AboutSection />
+          <WhyChooseSection />
           <Services />
           <Doctors />
           <Gallery />

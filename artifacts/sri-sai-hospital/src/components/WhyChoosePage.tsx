@@ -56,6 +56,40 @@ const quotes = [
   { quote: 'Best hospital in tanuku. Doctors are very friendly and staff also good working staff.', name: 'Karuna Chintapalli' },
 ];
 
+// Short version for the home page, right after About. About already covers
+// the doctors and the casualty, so these four points add what it doesn't.
+const homePoints = [
+  { icon: BadgeCheck, title: 'Doctors you can check', text: 'Both doctors list their degrees and medical council registration numbers.' },
+  { icon: FlaskConical, title: 'Laboratory on site', text: 'Tests, consultation rooms and the waiting area are all in one building.' },
+  { icon: Activity, title: 'Follow-up over time', text: 'Diabetes and blood pressure care continues with regular review visits.' },
+  { icon: Video, title: 'Consult from home', text: 'Book a Zoom consultation online, confirmed on WhatsApp.' },
+];
+
+export function WhyChooseSection() {
+  return (
+    <section className="section why-home" id="why-us" aria-labelledby="why-home-title">
+      <div className="container">
+        <div className="why-home-head reveal">
+          <div>
+            <span className="eyebrow">Why choose us</span>
+            <h2 id="why-home-title">Why patients choose <em>Sri Siri Hospital</em></h2>
+          </div>
+          <a className="why-text-link" href="/why-choose">See all six reasons <ArrowRight size={15} aria-hidden="true" /></a>
+        </div>
+        <ul className="why-home-grid">
+          {homePoints.map(({ icon: Icon, title, text }, index) => (
+            <li key={title} className={`why-home-item reveal reveal-delay-${Math.min(index + 1, 3)}`}>
+              <span className="why-reason-icon" aria-hidden="true"><Icon size={22} strokeWidth={1.7} /></span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
 export function WhyChoosePage() {
   return (
     <main className="why-page" aria-labelledby="why-title">
