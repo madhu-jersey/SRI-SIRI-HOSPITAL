@@ -1,2 +1,9 @@
 User-agent: *
 Allow: /
+# Staff dashboard, patients' private appointment links and the server API
+Disallow: /dashboard
+Disallow: /a/
+Disallow: /f/
+Disallow: /api/
+
+Sitemap: https://sri-siri-hospital-5nct-pink.vercel.app/sitemap.xml

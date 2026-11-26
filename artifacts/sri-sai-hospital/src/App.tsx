@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { PAGE_META, SITE_URL } from './pageMeta';
 import {
   ArrowRight, Camera, Clock3, ExternalLink, Instagram, MapPin, Menu, Youtube, X, ChevronDown, ChevronRight,
 } from 'lucide-react';
@@ -971,31 +972,18 @@ function App() {
     return () => window.cancelAnimationFrame(frame);
   }, [pageRoute]);
   useEffect(() => {
-    const pageMetadata = {
-      home: {
-        title: 'Sri Siri Hospital',
-        description: 'Sri Siri Hospital in Tanuku, Andhra Pradesh. Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services.',
-      },
-      gallery: {
-        title: 'Sri Siri Hospital',
-        description: 'Sri Siri Hospital in Tanuku, Andhra Pradesh. Internal medicine, neuro-psychiatry, stroke and diabetes care, with 24-hour casualty services.',
-      },
-      faq: { title: 'Frequently asked questions · Sri Siri Hospital, Tanuku', description: 'Frequently asked questions · Sri Siri Hospital, Tanuku' },
-      'why-choose': { title: 'Why choose Sri Siri Hospital, Tanuku', description: 'Two specialist doctors, a laboratory, 24-hour casualty and video consultations at Sri Siri Hospital, Velpur Road, Tanuku. Rated 5.0 from 31 Google reviews.' },
-      consult: { title: 'Video consultation with Dr. Sritha · Sri Siri Hospital', description: 'Book a Zoom video consultation with Dr. Sritha at Sri Siri Hospital, Tanuku. Pick a time and send your request on WhatsApp.' },
-      track: { title: 'Your appointment · Sri Siri Hospital', description: 'Your video consultation with Sri Siri Hospital.' },
-      feedback: { title: 'Feedback · Sri Siri Hospital', description: 'Tell us how your consultation went.' },
-      dashboard: { title: 'Consultations dashboard · Sri Siri Hospital', description: 'Staff dashboard.' },
-      about: { title: 'About · Sri Siri Hospital, Tanuku', description: 'Sri Siri Hospital on Velpur Road, Tanuku: internal medicine, neuro-psychiatry, stroke and diabetes care, with a 24-hour casualty.' },
-      services: { title: 'Services · Sri Siri Hospital, Tanuku', description: 'Neurology and stroke care, diabetes and endocrine care, internal medicine, psychiatry, migraine treatment and 24-hour casualty in Tanuku.' },
-      doctors: { title: 'Doctors · Sri Siri Hospital, Tanuku', description: 'Dr. Sritha, MBBS, MD (Neuro-Psychiatry), and Dr. Jayavardhan Reddy Bijjam, MBBS, MD (Physician), at Sri Siri Hospital, Tanuku.' },
-      videos: { title: 'Health videos · Sri Siri Hospital, Tanuku', description: 'Health videos from the doctors of Sri Siri Hospital, Tanuku.' },
-      reviews: { title: 'Reviews · Sri Siri Hospital, Tanuku', description: 'Sri Siri Hospital is rated 5.0 from 31 Google reviews. Read what patients say.' },
-      contact: { title: 'Contact and directions · Sri Siri Hospital, Tanuku', description: 'Address, phone, consultation hours and directions for Sri Siri Hospital, Velpur Road, Tanuku. Casualty open 24 hours.' },
-    } satisfies Record<PageRoute, { title: string; description: string }>;
+    const pageMetadata: Record<PageRoute, { title: string; description: string; path: string }> = PAGE_META;
     document.title = pageMetadata[pageRoute].title;
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (description) description.content = pageMetadata[pageRoute].description;
+    // One canonical address per page, so Google does not treat variants as duplicates.
+    let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = SITE_URL + (pageMetadata[pageRoute].path.endsWith('/') && pageRoute !== 'home' ? window.location.pathname : pageMetadata[pageRoute].path);
     // Private pages (patient links and the staff dashboard) stay out of search results.
     let robots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (['track', 'feedback', 'dashboard'].includes(pageRoute)) {
