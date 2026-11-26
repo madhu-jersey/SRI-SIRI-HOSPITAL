@@ -150,7 +150,7 @@ export function WhyChoosePage() {
                     ) : (
                       <a className="button button-primary" href={`tel:${phone}`}><PhoneCall size={16} aria-hidden="true" /> Call to book</a>
                     )}
-                    <a className="why-text-link" href={`/#doctor-${index === 0 ? 'sritha' : 'jayavardhan'}`}>Full profile <ArrowRight size={15} aria-hidden="true" /></a>
+                    <a className="why-text-link" href={`/doctors#doctor-${index === 0 ? 'sritha' : 'jayavardhan'}`}>Full profile <ArrowRight size={15} aria-hidden="true" /></a>
                   </div>
                 </div>
               </article>
@@ -173,7 +173,7 @@ export function WhyChoosePage() {
               </figure>
             ))}
           </div>
-          <a className="why-text-link" href="/#reviews">Read all reviews <ArrowRight size={15} aria-hidden="true" /></a>
+          <a className="why-text-link" href="/reviews">Read all reviews <ArrowRight size={15} aria-hidden="true" /></a>
         </div>
       </section>
 

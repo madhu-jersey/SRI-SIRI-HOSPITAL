@@ -1263,3 +1263,15 @@ a.hero-fact-value:hover { color:var(--brand-red); }
   .hero-fact, .hero-fact + .hero-fact { padding:14px 0; border-left:0; border-top:1px solid var(--line); }
   .hero-fact:first-child { border-top:0; }
 }
+
+/* ---------- Section pages (/about, /services, …) ---------- */
+.section-page { background:var(--paper); }
+.section-page-trail { display:flex; align-items:center; gap:8px; padding:22px 0 0; color:var(--body-text); font-size:13px; font-weight:600; }
+.section-page-trail a { color:var(--green); text-decoration:none; }
+.section-page-trail a:hover { color:var(--brand-red); text-decoration:underline; text-underline-offset:3px; }
+.section-page-trail span { color:var(--ink); }
+.section-page > .section:first-of-type { padding-top:clamp(28px, 4vw, 48px); }
+.section-page-next { display:flex; justify-content:flex-end; padding:8px 0 56px; }
+.section-page-next a { display:inline-flex; align-items:center; gap:8px; min-height:48px; padding:0 22px; border:1.5px solid var(--line); border-radius:999px; background:#fff; color:var(--green-deep); font-weight:700; text-decoration:none; }
+.section-page-next a:hover { border-color:var(--brand-red); color:var(--brand-red); }
+@media (max-width:767px) { .section-page-next { justify-content:stretch; padding-bottom:96px; } .section-page-next a { width:100%; justify-content:center; } }

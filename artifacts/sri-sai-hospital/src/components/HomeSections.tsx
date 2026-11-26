@@ -27,7 +27,7 @@ export function AboutSection() {
           <p className="about-lead">Sri Siri Hospital on Velpur Road, Tanuku, treats internal medicine, neuro-psychiatry, stroke and diabetes.</p>
           <p className="about-text">Two specialist doctors see patients six days a week, and the casualty ward is open around the clock.</p>
           <div className="about-actions">
-            <a className="button button-outline" href="#doctors">Meet our doctors <ArrowRight size={18} aria-hidden="true" /></a>
+            <a className="button button-outline" href="/doctors">Meet our doctors <ArrowRight size={18} aria-hidden="true" /></a>
           </div>
         </div>
       </div>

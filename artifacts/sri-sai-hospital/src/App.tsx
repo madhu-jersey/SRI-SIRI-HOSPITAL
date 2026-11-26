@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import {
-  ArrowRight, Camera, Clock3, ExternalLink, Instagram, MapPin, Menu, Youtube, X, ChevronDown,
+  ArrowRight, Camera, Clock3, ExternalLink, Instagram, MapPin, Menu, Youtube, X, ChevronDown, ChevronRight,
 } from 'lucide-react';
 import { DoctorsSection } from './components/DoctorsSection';
 import { VideosSection } from './components/VideosSection';
@@ -21,7 +21,19 @@ const directions = 'https://www.google.com/maps/dir/?api=1&destination=16.753643
 const reviewsUrl = 'https://www.google.com/maps/place/Sri+Siri+hospital/@16.7536484,81.6836458,840m/data=!3m1!1e3!4m18!1m9!3m8!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!2sSri+Siri+hospital!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn!3m7!1s0x3a37b72ffc38c451:0xf66d8993ec198c1a!8m2!3d16.7536433!4d81.6862207!9m1!1b1!16s%2Fg%2F11j1yzzytn?entry=ttu';
 const youtubeChannel = 'https://www.youtube.com/channel/UCoZrqTftw_z7tXwagHrw2oA';
 
-type PageRoute = 'home' | 'gallery' | 'faq' | 'why-choose' | 'consult' | 'track' | 'feedback' | 'dashboard';
+type PageRoute = 'home' | 'gallery' | 'faq' | 'why-choose' | 'consult' | 'track' | 'feedback' | 'dashboard' | SectionRoute;
+
+// Each home-page section also has its own page with the same content.
+type SectionRoute = 'about' | 'services' | 'doctors' | 'videos' | 'reviews' | 'contact';
+const SECTION_PAGES: Record<SectionRoute, { label: string; next: SectionRoute | null }> = {
+  about: { label: 'About', next: 'services' },
+  services: { label: 'Services', next: 'doctors' },
+  doctors: { label: 'Doctors', next: 'videos' },
+  videos: { label: 'Health videos', next: 'reviews' },
+  reviews: { label: 'Reviews', next: 'contact' },
+  contact: { label: 'Contact', next: null },
+};
+const isSectionRoute = (route: PageRoute): route is SectionRoute => route in SECTION_PAGES;
 
 const CONSULT_ROUTES: PageRoute[] = ['consult', 'track', 'feedback'];
 
@@ -31,6 +43,8 @@ function getPageRoute(): PageRoute {
   if (path.startsWith('/a/')) return 'track';
   if (path.startsWith('/f/')) return 'feedback';
   if (path === '/dashboard') return 'dashboard';
+  const section = path.slice(1);
+  if (section in SECTION_PAGES) return section as SectionRoute;
   if (window.location.pathname === '/gallery' || window.location.hash === '#gallery-view') return 'gallery';
   if (window.location.pathname === '/faq' || window.location.hash === '#faq') return 'faq';
   if (window.location.pathname === '/why-choose' || window.location.hash === '#why-choose') return 'why-choose';
@@ -125,6 +139,9 @@ function SiteHeader() {
   const closeMenu = () => setMenuOpen(false);
   const homePrefix = isStandalonePage ? '/' : '';
   const navLink = (section: string) => `${homePrefix}#${section}`;
+  const route = getPageRoute();
+  // On the home page the menu also highlights the section in view.
+  const current = (page: PageRoute, section: string) => (route === page ? 'page' : route === 'home' && activeSection === section ? 'location' : undefined);
   return (
     <>
     <div className="top-bar">
@@ -144,14 +161,14 @@ function SiteHeader() {
           <span className="brand-name">Sri Siri Hospital<small>Tanuku, Andhra Pradesh</small></span>
         </a>
         <nav className={`nav-links${menuOpen ? ' open' : ''}`} aria-label="Main navigation">
-          <a href={navLink('about')} aria-current={activeSection === 'about' ? 'location' : undefined} data-testid="link-nav-about" onClick={closeMenu}>About</a>
+          <a href="/about" aria-current={current('about', 'about')} data-testid="link-nav-about" onClick={closeMenu}>About</a>
           <a href="/why-choose" aria-current={getPageRoute() === 'why-choose' ? 'page' : undefined} data-testid="link-nav-why-choose" onClick={closeMenu}>Why us</a>
-          <a href={navLink('services')} aria-current={activeSection === 'services' ? 'location' : undefined} data-testid="link-nav-services" onClick={closeMenu}>Services</a>
-          <a href={navLink('doctors')} aria-current={activeSection === 'doctors' ? 'location' : undefined} data-testid="link-nav-doctors" onClick={closeMenu}>Doctors</a>
-          <a href={navLink('gallery')} aria-current={activeSection === 'gallery' ? 'location' : undefined} data-testid="link-nav-hospital" onClick={closeMenu}>Hospital</a>
-          <a href={navLink('reviews')} aria-current={activeSection === 'reviews' ? 'location' : undefined} data-testid="link-nav-reviews" onClick={closeMenu}>Reviews</a>
+          <a href="/services" aria-current={current('services', 'services')} data-testid="link-nav-services" onClick={closeMenu}>Services</a>
+          <a href="/doctors" aria-current={current('doctors', 'doctors')} data-testid="link-nav-doctors" onClick={closeMenu}>Doctors</a>
+          <a href="/gallery" aria-current={current('gallery', 'gallery')} data-testid="link-nav-hospital" onClick={closeMenu}>Hospital</a>
+          <a href="/reviews" aria-current={current('reviews', 'reviews')} data-testid="link-nav-reviews" onClick={closeMenu}>Reviews</a>
           <a href="/faq" aria-current={getPageRoute() === 'faq' ? 'page' : undefined} data-testid="link-nav-faq" onClick={closeMenu}>FAQ</a>
-          <a href={navLink('visit')} aria-current={activeSection === 'visit' ? 'location' : undefined} data-testid="link-nav-visit" onClick={closeMenu}>Contact</a>
+          <a href="/contact" aria-current={current('contact', 'visit')} data-testid="link-nav-visit" onClick={closeMenu}>Contact</a>
           <a className="nav-mobile-call" href={`tel:${phone}`} onClick={closeMenu}>Call now</a>
           <a
             className="nav-instagram-mobile"
@@ -854,12 +871,12 @@ function Footer() {
           <div className="reveal" style={{ '--footer-index': 1 } as React.CSSProperties}>
             <p className="footer-label">Explore</p>
             <nav className="footer-list" aria-label="Footer navigation">
-              <a href={`${homePrefix}#about`}>About</a>
-              <a href={`${homePrefix}#services`} data-testid="link-footer-services">Services</a>
-              <a href={`${homePrefix}#doctors`} data-testid="link-footer-doctors">Doctors</a>
-              <a href={`${homePrefix}#gallery`} data-testid="link-footer-hospital">Hospital</a>
-              <a href={`${homePrefix}#videos`} data-testid="link-footer-videos">Health videos</a>
-              <a href={`${homePrefix}#reviews`} data-testid="link-footer-reviews">Reviews</a>
+              <a href="/about">About</a>
+              <a href="/services" data-testid="link-footer-services">Services</a>
+              <a href="/doctors" data-testid="link-footer-doctors">Doctors</a>
+              <a href="/gallery" data-testid="link-footer-hospital">Hospital</a>
+              <a href="/videos" data-testid="link-footer-videos">Health videos</a>
+              <a href="/reviews" data-testid="link-footer-reviews">Reviews</a>
               <a href="/faq" data-testid="link-footer-faq">FAQ</a>
               <a href="/why-choose" data-testid="link-footer-why-choose">Why choose us</a>
             </nav>
@@ -879,6 +896,32 @@ function Footer() {
         </div>
       </div>
     </footer>
+  );
+}
+
+// A home-page section on its own page: a small trail, the section itself,
+// and a link on to the next section.
+function SectionPage({ route }: { route: SectionRoute }) {
+  const { label, next } = SECTION_PAGES[route];
+  return (
+    <main className="section-page">
+      <nav className="container section-page-trail" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <ChevronRight size={14} aria-hidden="true" />
+        <span aria-current="page">{label}</span>
+      </nav>
+      {route === 'about' && <><AboutSection /><WhyChooseSection /></>}
+      {route === 'services' && <Services />}
+      {route === 'doctors' && <Doctors />}
+      {route === 'videos' && <Videos />}
+      {route === 'reviews' && <Reviews />}
+      {route === 'contact' && <Visit />}
+      {next && (
+        <div className="container section-page-next">
+          <a href={`/${next}`}>Next: {SECTION_PAGES[next].label} <ArrowRight size={17} aria-hidden="true" /></a>
+        </div>
+      )}
+    </main>
   );
 }
 
@@ -920,7 +963,7 @@ function App() {
   }, []);
   useEffect(() => {
     const hash = window.location.hash;
-    if (pageRoute !== 'home' || !hash.startsWith('#doctor-')) return;
+    if ((pageRoute !== 'home' && pageRoute !== 'doctors') || !hash.startsWith('#doctor-')) return;
     const frame = window.requestAnimationFrame(() => {
       const target = document.getElementById(decodeURIComponent(window.location.hash.slice(1)));
       target?.scrollIntoView({ block: 'start' });
@@ -943,6 +986,12 @@ function App() {
       track: { title: 'Your appointment · Sri Siri Hospital', description: 'Your video consultation with Sri Siri Hospital.' },
       feedback: { title: 'Feedback · Sri Siri Hospital', description: 'Tell us how your consultation went.' },
       dashboard: { title: 'Consultations dashboard · Sri Siri Hospital', description: 'Staff dashboard.' },
+      about: { title: 'About · Sri Siri Hospital, Tanuku', description: 'Sri Siri Hospital on Velpur Road, Tanuku: internal medicine, neuro-psychiatry, stroke and diabetes care, with a 24-hour casualty.' },
+      services: { title: 'Services · Sri Siri Hospital, Tanuku', description: 'Neurology and stroke care, diabetes and endocrine care, internal medicine, psychiatry, migraine treatment and 24-hour casualty in Tanuku.' },
+      doctors: { title: 'Doctors · Sri Siri Hospital, Tanuku', description: 'Dr. Sritha, MBBS, MD (Neuro-Psychiatry), and Dr. Jayavardhan Reddy Bijjam, MBBS, MD (Physician), at Sri Siri Hospital, Tanuku.' },
+      videos: { title: 'Health videos · Sri Siri Hospital, Tanuku', description: 'Health videos from the doctors of Sri Siri Hospital, Tanuku.' },
+      reviews: { title: 'Reviews · Sri Siri Hospital, Tanuku', description: 'Sri Siri Hospital is rated 5.0 from 31 Google reviews. Read what patients say.' },
+      contact: { title: 'Contact and directions · Sri Siri Hospital, Tanuku', description: 'Address, phone, consultation hours and directions for Sri Siri Hospital, Velpur Road, Tanuku. Casualty open 24 hours.' },
     } satisfies Record<PageRoute, { title: string; description: string }>;
     document.title = pageMetadata[pageRoute].title;
     const description = document.querySelector<HTMLMetaElement>('meta[name="description"]');
@@ -987,6 +1036,8 @@ function App() {
         <FaqPage />
       ) : pageRoute === 'why-choose' ? (
         <WhyChoosePage />
+      ) : isSectionRoute(pageRoute) ? (
+        <SectionPage route={pageRoute} />
       ) : (
         <main>
           <Hero />
