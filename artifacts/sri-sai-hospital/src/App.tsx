@@ -145,6 +145,7 @@ function SiteHeader() {
         </a>
         <nav className={`nav-links${menuOpen ? ' open' : ''}`} aria-label="Main navigation">
           <a href={navLink('about')} aria-current={activeSection === 'about' ? 'location' : undefined} data-testid="link-nav-about" onClick={closeMenu}>About</a>
+          <a href="/why-choose" aria-current={getPageRoute() === 'why-choose' ? 'page' : undefined} data-testid="link-nav-why-choose" onClick={closeMenu}>Why us</a>
           <a href={navLink('services')} aria-current={activeSection === 'services' ? 'location' : undefined} data-testid="link-nav-services" onClick={closeMenu}>Services</a>
           <a href={navLink('doctors')} aria-current={activeSection === 'doctors' ? 'location' : undefined} data-testid="link-nav-doctors" onClick={closeMenu}>Doctors</a>
           <a href={navLink('gallery')} aria-current={activeSection === 'gallery' ? 'location' : undefined} data-testid="link-nav-hospital" onClick={closeMenu}>Hospital</a>
