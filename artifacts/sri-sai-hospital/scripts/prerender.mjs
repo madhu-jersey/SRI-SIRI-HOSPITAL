@@ -1,7 +1,7 @@
 // After `vite build`: writes a ready-made HTML file for every public page
 // (title, description, canonical link, link-preview tags, structured data and
 // the page's own content), plus sitemap.xml. Private pages (dashboard, patient
-// links) fall back to the plain app shell.
+// links) get the home file from Vercel, which clears itself there.
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -40,8 +40,6 @@ function setMeta(html, attr, name, content) {
   return pattern.test(html) ? html.replace(pattern, tag) : html.replace('</head>', `    ${tag}\n  </head>`);
 }
 
-// The plain shell for pages that are not pre-built (dashboard, patient links).
-writeFileSync(path.join(outDir, 'app-shell.html'), template);
 
 const pages = Object.entries(ssr.PAGE_META).filter(([, meta]) => meta.indexable);
 const today = new Date().toISOString().slice(0, 10);
@@ -68,7 +66,13 @@ for (const [key, meta] of pages) {
     `<script type="application/ld+json">${JSON.stringify(ssr.structuredData(key)).replace(/</g, '\\u003c')}</script>`,
   ].map((line) => `    ${line}`).join('\n');
   html = html.replace('</head>', `${head}\n  </head>`);
-  html = html.replace('<div id="root"></div>', `<div id="root">${body}</div>`);
+  // Vercel serves index.html for every address that has no file of its own
+  // (the dashboard, patient links). There the home content must not show,
+  // so the home page clears it straight away on any other address.
+  const guard = meta.path === '/'
+    ? '<script>if(location.pathname!=="/"&&location.pathname!=="/index.html"){document.getElementById("root").innerHTML=""}</script>'
+    : '';
+  html = html.replace('<div id="root"></div>', `<div id="root">${body}</div>${guard}`);
   const file = meta.path === '/' ? path.join(outDir, 'index.html') : path.join(outDir, meta.path.slice(1), 'index.html');
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, html);
